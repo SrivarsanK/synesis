@@ -4,8 +4,9 @@ import type { CaseDetail, CaseSummary, DemoStatus, Graph, List, Metrics, Transac
 import { account, milliseconds, money, utc } from './format';
 import TransactionGraph from './TransactionGraph';
 import BenchmarkPanel from './BenchmarkPanel';
+import StatementImportPanel from './StatementImportPanel';
 
-type Mode = 'monitor' | 'investigation' | 'benchmarks';
+type Mode = 'monitor' | 'investigation' | 'benchmarks' | 'imports';
 type Snapshot = { transactions: List<Transaction>; cases: List<CaseSummary>; status: DemoStatus };
 type CaseAction = 'escalate_for_review' | 'monitor_or_verify' | 'close_as_benign' | 'download_evidence';
 
@@ -203,9 +204,9 @@ export default function App() {
     <header className="app-header">
       <a className="brand" href="#main" onClick={() => setMode('monitor')}>blindspot<span>.</span></a>
       <nav aria-label="Main navigation">
-        {(['monitor', 'investigation', 'benchmarks'] as const).map(tab =>
+        {(['monitor', 'investigation', 'benchmarks', 'imports'] as const).map(tab =>
           <button key={tab} aria-current={mode === tab ? 'page' : undefined} onClick={() => setMode(tab)}>
-            {tab === 'monitor' ? 'Live monitor' : tab === 'investigation' ? 'Investigation' : 'Benchmarks'}
+            {tab === 'monitor' ? 'Live monitor' : tab === 'investigation' ? 'Investigation' : tab === 'benchmarks' ? 'Benchmarks' : 'Statement import'}
           </button>
         )}
       </nav>
@@ -220,8 +221,24 @@ export default function App() {
     <main id="main">
       <div className="page-heading">
         <div>
-          <h1>{mode === 'monitor' ? 'Follow the money. Find the context.' : investigating ? 'Every signal needs evidence.' : 'Measure the difference.'}</h1>
-          <p>{mode === 'monitor' ? 'Incremental account activity and evidence-backed investigation.' : investigating ? 'Potential risk, explained through real synthetic transfers.' : 'Rules-only baseline and contextual detection on held-out synthetic scenarios.'}</p>
+          <h1>
+            {mode === 'monitor'
+              ? 'Follow the money. Find the context.'
+              : investigating
+              ? 'Every signal needs evidence.'
+              : mode === 'benchmarks'
+              ? 'Measure the difference.'
+              : 'Personal statement & UPI analysis.'}
+          </h1>
+          <p>
+            {mode === 'monitor'
+              ? 'Incremental account activity and evidence-backed investigation.'
+              : investigating
+              ? 'Potential risk, explained through real synthetic transfers.'
+              : mode === 'benchmarks'
+              ? 'Rules-only baseline and contextual detection on held-out synthetic scenarios.'
+              : 'Parse bank statements and UPI exports, normalize transaction schemas, and detect personal behavioral anomalies.'}
+          </p>
         </div>
         <span className="workspace-label">INVESTIGATION WORKSPACE</span>
       </div>
@@ -254,7 +271,11 @@ export default function App() {
         </div>
       </section>
 
-      {mode === 'benchmarks' ? <BenchmarkPanel metrics={metrics} error={metricsError} retry={() => void refreshMetrics()} /> : <>
+      {mode === 'benchmarks' ? (
+        <BenchmarkPanel metrics={metrics} error={metricsError} retry={() => void refreshMetrics()} />
+      ) : mode === 'imports' ? (
+        <StatementImportPanel />
+      ) : <>
         {/* Scenario Controls */}
         <section className="demo-controls" aria-label="Synthetic scenario controls">
           <div className="scenario-input">

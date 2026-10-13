@@ -1,5 +1,5 @@
 use crate::{
-    evaluation,
+    evaluation, imports,
     store::Engine,
     types::{ApiError, Transaction},
 };
@@ -72,6 +72,10 @@ pub fn router(engine: Engine) -> Router {
         .route("/api/demo/status", get(status))
         .route("/api/metrics", get(metrics))
         .route("/api/evaluate", post(evaluate))
+        .route("/api/imports/preview", post(import_preview))
+        .route("/api/imports/analyze", post(import_analyze))
+        .route("/api/imports/samples", get(import_samples))
+        .route("/api/imports/samples/{id}/analyze", post(import_sample_analyze))
         .fallback(|| async {
             (
                 StatusCode::NOT_FOUND,
@@ -150,3 +154,82 @@ async fn evaluate(State(s): State<Shared>) -> Result<Json<Value>, ApiError> {
     lock(&s)?.save_metrics(&value)?;
     Ok(Json(value))
 }
+
+#[derive(Deserialize)]
+struct ImportPayload {
+    content: String,
+    #[serde(default)]
+    _filename: Option<String>,
+}
+
+async fn import_preview(
+    b: Result<Json<ImportPayload>, JsonRejection>,
+) -> Result<Json<Value>, ApiError> {
+    let payload = body(b)?;
+    let preview = imports::parse_and_preview(&payload.content)?;
+    Ok(Json(serde_json::to_value(preview)?))
+}
+
+async fn import_analyze(
+    b: Result<Json<ImportPayload>, JsonRejection>,
+) -> Result<Json<Value>, ApiError> {
+    let payload = body(b)?;
+    let analysis = imports::parse_and_analyze(&payload.content)?;
+    Ok(Json(serde_json::to_value(analysis)?))
+}
+
+async fn import_samples() -> Result<Json<Value>, ApiError> {
+    Ok(Json(json!({
+        "items": [
+            {
+                "id": "bank_statement_period1",
+                "title": "Kaaviya — Last year",
+                "format": "bank_statement",
+                "period": "Jul 2025 – Mar 2026",
+                "valid_transactions": 505,
+                "description": "Savings account bank statement with metadata on rows 1–19, headers starting on row 20, DR/CR columns, and balance tracking."
+            },
+            {
+                "id": "bank_statement_period2",
+                "title": "Kaaviya — Recent transactions",
+                "format": "bank_statement",
+                "period": "Apr 2026 – Oct 12, 2026",
+                "valid_transactions": 817,
+                "description": "Consecutive follow-up bank statement period with identical column structure and zero date overlap."
+            },
+            {
+                "id": "upi_transactions",
+                "title": "Srivarsan transactions",
+                "format": "upi_export",
+                "period": "Oct 2025 – Oct 12, 2026",
+                "valid_transactions": 373,
+                "description": "UPI payment export with 9 columns, counterparty VPAs, debit/credit/self-transfer tags, and 8 date-only records."
+            }
+        ]
+    })))
+}
+
+async fn import_sample_analyze(
+    Path(id): Path<String>,
+) -> Result<Json<Value>, ApiError> {
+    let filename = match id.as_str() {
+        "bank_statement_period1" => "bank_statement_period1.csv",
+        "bank_statement_period2" => "bank_statement_period2.csv",
+        "upi_transactions" => "upi_transactions.csv",
+        _ => return Err(ApiError::bad("UNKNOWN_SAMPLE", "Sample not found")),
+    };
+    let path = std::path::PathBuf::from(env!("CARGO_MANIFEST_DIR"))
+        .parent()
+        .unwrap()
+        .join("fixtures")
+        .join("imports")
+        .join(filename);
+    let content = std::fs::read_to_string(path).map_err(ApiError::internal)?;
+    let preview = imports::parse_and_preview(&content)?;
+    let analysis = imports::parse_and_analyze(&content)?;
+    Ok(Json(json!({
+        "preview": preview,
+        "analysis": analysis,
+    })))
+}
+

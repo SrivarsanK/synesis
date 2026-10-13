@@ -14,3 +14,88 @@ export interface IngestResult { transaction_id: string; accepted: boolean; dupli
 export interface NextResult { ingestion: IngestResult | null; next_index: number; complete: boolean }
 export interface MetricsRow { tp: number; fp: number; fn: number; tn: number; precision: number | null; recall: number | null; false_positive_rate: number | null; sampled_event_count: number; latency_p50_ms: number | null; latency_p95_ms: number | null }
 export type Metrics = { available: false; reason: string } | { available: true; dataset: string; evaluation_unit: 'scenario'; scenario_count: number; evaluated_at: string; baseline: MetricsRow; blindspot: MetricsRow };
+
+export type ImportFormat = 'bank_statement' | 'upi_export';
+export type Direction = 'debit' | 'credit' | 'self_transfer';
+export type TimestampPrecision = 'date' | 'minute';
+
+export interface NormalizedTransaction {
+  transaction_id: string;
+  timestamp: string;
+  direction: Direction;
+  amount_minor: number;
+  amount_inr: number;
+  description: string;
+  counterparty?: string | null;
+  balance_after_minor?: number | null;
+  balance_after_inr?: number | null;
+  account_id?: string | null;
+  source_format: ImportFormat;
+  timestamp_precision: TimestampPrecision;
+  source_row: number;
+  raw_particulars?: string | null;
+}
+
+export interface StatementMetadata {
+  account_holder?: string | null;
+  account_number_masked?: string | null;
+  bank_name?: string | null;
+  statement_period?: string | null;
+}
+
+export interface ImportPreview {
+  format: ImportFormat;
+  header_line: number;
+  total_rows: number;
+  valid_transactions: number;
+  date_range?: { start: string; end: string } | null;
+  direction_counts: { debit: number; credit: number; self_transfer: number };
+  total_debit_inr: number;
+  total_credit_inr: number;
+  missing_fields_summary: string[];
+  metadata?: StatementMetadata | null;
+  preview_rows: NormalizedTransaction[];
+}
+
+export interface PersonalAnomaly {
+  anomaly_type: string;
+  severity: 'low' | 'medium' | 'high';
+  title: string;
+  description: string;
+  transaction_ids: string[];
+  metric_observed: string;
+  threshold: string;
+  date?: string | null;
+}
+
+export interface PersonalAnalysis {
+  format: ImportFormat;
+  valid_transactions: number;
+  date_range?: { start: string; end: string } | null;
+  summary: {
+    total_transactions: number;
+    debit_count: number;
+    credit_count: number;
+    self_transfer_count: number;
+    total_debit_inr: number;
+    total_credit_inr: number;
+    net_flow_inr: number;
+    average_debit_inr: number;
+    max_debit_inr: number;
+    min_balance_inr?: number | null;
+    max_balance_inr?: number | null;
+  };
+  anomalies: PersonalAnomaly[];
+  top_counterparties: { counterparty: string; transaction_count: number; total_amount_inr: number }[];
+  daily_activity: { date: string; transaction_count: number; total_debit_inr: number; total_credit_inr: number }[];
+  limitations: string;
+}
+
+export interface ImportSampleItem {
+  id: string;
+  title: string;
+  format: ImportFormat;
+  period: string;
+  valid_transactions: number;
+  description: string;
+}
