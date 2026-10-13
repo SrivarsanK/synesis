@@ -3120,6 +3120,46 @@ footer .muted {
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.08);
 }
 
+/* Real Brand Logos (Logo.dev Integration) */
+.deck-avatar-logo {
+  box-shadow: 0 2px 8px rgba(15, 23, 42, 0.08);
+  border: 1.5px solid var(--border-strong) !important;
+  background: #ffffff !important;
+  flex-shrink: 0;
+}
+
+.pill-bank-logo {
+  flex-shrink: 0;
+  box-shadow: none !important;
+}
+
+.cp-brand-logo {
+  flex-shrink: 0;
+  background: #ffffff !important;
+}
+
+.tx-table-logo {
+  flex-shrink: 0;
+  background: #ffffff !important;
+}
+
+.particulars-hierarchy {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.particulars-text-col {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.bank-card-logo {
+  flex-shrink: 0;
+  background: #ffffff !important;
+}
+
 .deck-identity-meta {
   display: flex;
   flex-direction: column;

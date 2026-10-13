@@ -9,6 +9,7 @@ import type {
 } from './types';
 import { inr, money } from './format';
 import TransactionGraph from './TransactionGraph';
+import CompanyLogo from './CompanyLogo';
 
 /* --- Inline Minimalist SVG Icons (Anti-Slop, No Emojis) --- */
 const IconBank = () => (
@@ -73,6 +74,7 @@ const IconArrowRight = () => (
 interface BankOption {
   id: string;
   name: string;
+  domain: string;
   sampleId: string;
   tag: string;
   color: string;
@@ -88,6 +90,7 @@ const BANKS: BankOption[] = [
   {
     id: 'hdfc',
     name: 'HDFC Bank',
+    domain: 'hdfcbank.com',
     sampleId: 'bank_statement_period1',
     tag: 'Savings A/c',
     color: '#004c8f',
@@ -101,6 +104,7 @@ const BANKS: BankOption[] = [
   {
     id: 'icici',
     name: 'ICICI Bank',
+    domain: 'icicibank.com',
     sampleId: 'bank_statement_period2',
     tag: 'Salary A/c',
     color: '#b02a30',
@@ -114,6 +118,7 @@ const BANKS: BankOption[] = [
   {
     id: 'sbi',
     name: 'State Bank of India',
+    domain: 'sbi.co.in',
     sampleId: 'bank_statement_combined',
     tag: 'Unified History',
     color: '#1a5276',
@@ -127,6 +132,7 @@ const BANKS: BankOption[] = [
   {
     id: 'upi',
     name: 'UPI Payments (BHIM/GPay)',
+    domain: 'bhimupi.org.in',
     sampleId: 'upi_transactions',
     tag: 'UPI Export',
     color: '#5b21b6',
@@ -241,6 +247,7 @@ export default function AccountConsole({
       setActiveBank({
         id: 'uploaded',
         name: file.name.replace('.csv', ''),
+        domain: file.name.toLowerCase().includes('sbi') ? 'sbi.co.in' : file.name.toLowerCase().includes('hdfc') ? 'hdfcbank.com' : file.name.toLowerCase().includes('icici') ? 'icicibank.com' : 'bankofbaroda.in',
         sampleId: 'custom_upload',
         tag: previewData.format === 'bank_statement' ? 'Bank Statement' : 'UPI Export',
         color: '#0f766e',
@@ -515,9 +522,12 @@ export default function AccountConsole({
         <div className="deck-main-row">
           {/* Left: Active Entity Identity */}
           <div className="deck-identity-cell">
-            <div className="deck-avatar-badge" style={{ backgroundColor: activeBank.color }}>
-              {activeBank.name.slice(0, 2).toUpperCase()}
-            </div>
+            <CompanyLogo
+              domain={activeBank.domain}
+              name={activeBank.name}
+              size={54}
+              className="deck-avatar-logo"
+            />
             <div className="deck-identity-meta">
               <div className="deck-title-line">
                 <h2>{activeBank.accountHolder}</h2>
@@ -582,7 +592,7 @@ export default function AccountConsole({
                   className={`deck-pill-btn ${isActive ? 'active' : ''}`}
                   onClick={() => loadSample(b.sampleId, b, 'sample')}
                 >
-                  <span className="pill-dot" style={{ backgroundColor: b.color }} />
+                  <CompanyLogo domain={b.domain} name={b.name} size={18} className="pill-bank-logo" />
                   <span className="pill-bank-name">{b.name}</span>
                   <span className="pill-tx-count">{b.recordCount} txs</span>
                 </button>
@@ -808,6 +818,7 @@ export default function AccountConsole({
                         <div className="cp-row-header">
                           <div className="cp-name-wrap">
                             <span className="cp-rank-num">#{idx + 1}</span>
+                            <CompanyLogo name={cp.counterparty} size={24} className="cp-brand-logo" />
                             <strong className="cp-title">{cp.counterparty}</strong>
                           </div>
                           <div className="cp-amount-wrap">
@@ -952,14 +963,21 @@ export default function AccountConsole({
                           </td>
                           <td>
                             <div className="particulars-hierarchy">
-                              {tx.counterparty ? (
-                                <>
-                                  <strong className="counterparty-bold">{tx.counterparty}</strong>
-                                  <span className="narration-muted">{tx.description}</span>
-                                </>
-                              ) : (
-                                <span className="narration-standard">{tx.description}</span>
-                              )}
+                              <CompanyLogo
+                                name={tx.counterparty || tx.description}
+                                size={22}
+                                className="tx-table-logo"
+                              />
+                              <div className="particulars-text-col">
+                                {tx.counterparty ? (
+                                  <>
+                                    <strong className="counterparty-bold">{tx.counterparty}</strong>
+                                    <span className="narration-muted">{tx.description}</span>
+                                  </>
+                                ) : (
+                                  <span className="narration-standard">{tx.description}</span>
+                                )}
+                              </div>
                             </div>
                           </td>
                           <td className="num-col">
@@ -1022,9 +1040,7 @@ export default function AccountConsole({
                         className={`bank-card-option ${modalSelectedBank.id === b.id ? 'selected' : ''}`}
                         onClick={() => setModalSelectedBank(b)}
                       >
-                        <div className="bank-icon-square" style={{ backgroundColor: b.color }}>
-                          {b.name.slice(0, 2).toUpperCase()}
-                        </div>
+                        <CompanyLogo domain={b.domain} name={b.name} size={40} className="bank-card-logo" />
                         <div className="bank-card-info">
                           <strong>{b.name}</strong>
                           <span>{b.accountHolder}</span>
@@ -1049,9 +1065,7 @@ export default function AccountConsole({
               {modalStep === 'enter_phone' && (
                 <div className="modal-step-content">
                   <div className="selected-bank-summary">
-                    <div className="bank-icon-square small" style={{ backgroundColor: modalSelectedBank.color }}>
-                      {modalSelectedBank.name.slice(0, 2).toUpperCase()}
-                    </div>
+                    <CompanyLogo domain={modalSelectedBank.domain} name={modalSelectedBank.name} size={32} className="bank-card-logo" />
                     <strong>{modalSelectedBank.name}</strong>
                     <span className="muted-pill">{modalSelectedBank.tag}</span>
                   </div>
