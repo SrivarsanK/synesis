@@ -1,0 +1,18 @@
+{
+  "model_type": "LightGBM_Flow_Ensemble",
+  "version": "1.4.0",
+  "auc": 0.962,
+  "threshold": 500,
+  "feature_weights": {
+    "distinct_senders_count": 0.22,
+    "pass_through_ratio": 0.24,
+    "forwarding_delay_seconds": -0.12,
+    "is_new_recipient": 0.16,
+    "recurrent_settlement_strength": -0.28,
+    "relative_size_surge": 0.14,
+    "fan_in_velocity": 0.18,
+    "source_hhi_dispersion": -0.08,
+    "amount_minor_scaled": 0.06,
+    "historical_inflow_count": -0.05
+  }
+}
