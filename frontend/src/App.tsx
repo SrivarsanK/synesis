@@ -240,12 +240,6 @@ export default function App() {
           </button>
         )}
       </nav>
-      <div className="header-status">
-        <span className="synthetic-badge">SYNTHETIC / DEMO</span>
-        <span className={loadError ? 'connection disconnected' : 'connection'}>
-          {loadError ? 'API disconnected' : snapshot ? 'API connected' : 'Connecting…'}
-        </span>
-      </div>
     </header>
 
     <main id="main">
