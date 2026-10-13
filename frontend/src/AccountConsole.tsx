@@ -692,7 +692,7 @@ export default function AccountConsole({
           </section>
 
           {/* 3. Asymmetric Section: Behavioral Anomalies (Left) + Top Counterparties & Ego Network (Right) */}
-          <div className="account-asymmetric-grid">
+          <div className={`account-asymmetric-grid ${viewGraph ? 'graph-expanded-flex' : ''}`}>
             {/* Left: Behavioral Deviations & Anomalies */}
             <section className="panel anomalies-column" aria-label="Behavioral anomaly detections">
               <div className="section-heading">
@@ -771,7 +771,7 @@ export default function AccountConsole({
             </section>
 
             {/* Right: Counterparties & Flow Network */}
-            <section className="panel counterparties-column" aria-label="Counterparties breakdown">
+            <section className={`panel counterparties-column ${viewGraph ? 'graph-mode-panel' : ''}`} aria-label="Counterparties breakdown">
               <div className="section-heading">
                 <div>
                   <h2>Top Beneficiaries &amp; Flow</h2>
