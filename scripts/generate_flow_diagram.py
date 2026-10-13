@@ -1,0 +1,225 @@
+import sys
+import re
+
+def generate_detection_flow():
+    svg_content = '''<svg viewBox="0 0 1020 520" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="flow-title flow-desc">
+  <title id="flow-title">Blindspot Temporal Money-Mule Detection &amp; Mitigation Logic</title>
+  <desc id="flow-desc">Flowchart illustrating the two-phase temporal money-mule detection engine: fan-in accumulation, causal outward trigger, and contextual merchant mitigation branching.</desc>
+  <defs>
+    <style>@import url('https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&amp;family=Geist:wght@400;500;600&amp;family=Geist+Mono:wght@400;500;600&amp;display=swap');</style>
+    <pattern id="dots2" width="22" height="22" patternUnits="userSpaceOnUse">
+      <circle cx="1" cy="1" r="0.9" fill="#2d3142" fill-opacity="0.08"/>
+    </pattern>
+    <marker id="arrow2" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+      <polygon points="0 0, 8 3, 0 6" fill="#4f5d75"/>
+    </marker>
+    <marker id="arrow-accent2" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+      <polygon points="0 0, 8 3, 0 6" fill="#eb6c36"/>
+    </marker>
+    <marker id="arrow-link2" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+      <polygon points="0 0, 8 3, 0 6" fill="#2e5aa8"/>
+    </marker>
+  </defs>
+
+  <!-- Canvas Background -->
+  <rect width="100%" height="100%" fill="#f5f5f5"/>
+  <rect width="100%" height="100%" fill="url(#dots2)" opacity="0.6"/>
+
+  <!-- ZONE 1: PHASE 1 (FAN-IN) -->
+  <rect x="40" y="55" width="270" height="425" rx="8" fill="#2d3142" fill-opacity="0.02" stroke="#2d3142" stroke-opacity="0.10" stroke-width="0.8"/>
+  <rect x="75" y="59" width="200" height="14" rx="2" fill="#f5f5f5"/>
+  <text x="175" y="69" fill="#4f5d75" font-size="7.5" font-family="'Geist Mono', monospace" font-weight="500" text-anchor="middle" letter-spacing="0.14em">STAGE 1 · TEMPORAL FAN-IN</text>
+
+  <!-- ZONE 2: PHASE 2 (CAUSAL OUTFLOW TRIGGER) -->
+  <rect x="350" y="55" width="270" height="425" rx="8" fill="#2d3142" fill-opacity="0.02" stroke="#2d3142" stroke-opacity="0.10" stroke-width="0.8"/>
+  <rect x="385" y="59" width="200" height="14" rx="2" fill="#f5f5f5"/>
+  <text x="485" y="69" fill="#4f5d75" font-size="7.5" font-family="'Geist Mono', monospace" font-weight="500" text-anchor="middle" letter-spacing="0.14em">STAGE 2 · PASS-THROUGH TRIGGER</text>
+
+  <!-- ZONE 3: PHASE 3 (CONTEXTUAL MITIGATION BRANCH) -->
+  <rect x="660" y="55" width="320" height="425" rx="8" fill="#2d3142" fill-opacity="0.02" stroke="#2d3142" stroke-opacity="0.10" stroke-width="0.8"/>
+  <rect x="710" y="59" width="220" height="14" rx="2" fill="#f5f5f5"/>
+  <text x="820" y="69" fill="#4f5d75" font-size="7.5" font-family="'Geist Mono', monospace" font-weight="500" text-anchor="middle" letter-spacing="0.14em">STAGE 3 · CONTEXTUAL SCORING</text>
+
+  <!-- CONNECTORS -->
+  <!-- Box 1 to Box 2 (Horizontal straight line) -->
+  <line x1="290" y1="260" x2="368" y2="260" stroke="#4f5d75" stroke-width="1.2" marker-end="url(#arrow2)"/>
+
+  <!-- Box 2 to Box 3A (Suspicious Mule - Elbow Right+Up with Accent Coral) -->
+  <path d="M 600,240 H 622 Q 630,240 630,232 V 178 Q 630,170 638,170 H 678" fill="none" stroke="#eb6c36" stroke-width="1.4" marker-end="url(#arrow-accent2)"/>
+
+  <!-- Box 2 to Box 3B (Merchant Mitigation - Elbow Right+Down with Link Blue) -->
+  <path d="M 600,280 H 622 Q 630,280 630,288 V 342 Q 630,350 638,350 H 678" fill="none" stroke="#2e5aa8" stroke-width="1.2" marker-end="url(#arrow-link2)"/>
+
+  <!-- CONNECTOR LABELS -->
+  <!-- Box 1 -> Box 2 Label -->
+  <rect x="296" y="245" width="66" height="13" rx="2" fill="#f5f5f5"/>
+  <text x="329" y="254" fill="#4f5d75" font-size="7.5" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.08em">ACCUMULATE</text>
+
+  <!-- Box 2 -> Box 3A Label (Centered at X=630) -->
+  <rect x="595" y="198" width="70" height="13" rx="2" fill="#f5f5f5"/>
+  <text x="630" y="207" fill="#eb6c36" font-size="7.5" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.08em">NO HISTORY</text>
+
+  <!-- Box 2 -> Box 3B Label (Centered at X=630) -->
+  <rect x="595" y="308" width="70" height="13" rx="2" fill="#f5f5f5"/>
+  <text x="630" y="317" fill="#2e5aa8" font-size="7.5" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.08em">SETTLEMENT</text>
+
+
+  <!-- NODES -->
+
+  <!-- NODE 1: Multi-Source Inflow Box -->
+  <rect x="60" y="100" width="230" height="320" rx="6" fill="#f5f5f5"/>
+  <rect x="60" y="100" width="230" height="320" rx="6" fill="#ffffff" stroke="#2d3142" stroke-width="1"/>
+  <rect x="68" y="106" width="56" height="12" rx="2" fill="none" stroke="#2d3142" stroke-opacity="0.40" stroke-width="0.8"/>
+  <text x="96" y="115" fill="#2d3142" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.08em">INFLOW</text>
+  <text x="175" y="134" fill="#2d3142" font-size="12" font-family="'Geist', sans-serif" font-weight="600" text-anchor="middle">Fan-In Inbound Activity</text>
+
+  <!-- Sub-details for Node 1 -->
+  <rect x="75" y="150" width="200" height="42" rx="4" fill="#2d3142" fill-opacity="0.03" stroke="#2d3142" stroke-opacity="0.12" stroke-width="0.8"/>
+  <text x="85" y="166" fill="#2d3142" font-size="9" font-family="'Geist Mono', monospace" font-weight="500">Source Count:</text>
+  <text x="160" y="166" fill="#2d3142" font-size="9" font-family="'Geist Mono', monospace" font-weight="600">≥ 3 distinct senders</text>
+  <text x="85" y="182" fill="#4f5d75" font-size="8.5" font-family="'Geist Mono', monospace">(S0, S1, S2 → M within 900s)</text>
+
+  <rect x="75" y="202" width="200" height="42" rx="4" fill="#2d3142" fill-opacity="0.03" stroke="#2d3142" stroke-opacity="0.12" stroke-width="0.8"/>
+  <text x="85" y="218" fill="#2d3142" font-size="9" font-family="'Geist Mono', monospace" font-weight="500">Time Window:</text>
+  <text x="160" y="218" fill="#2d3142" font-size="9" font-family="'Geist Mono', monospace" font-weight="600">15 min (900 seconds)</text>
+  <text x="85" y="234" fill="#4f5d75" font-size="8.5" font-family="'Geist Mono', monospace">rolling VecDeque slice</text>
+
+  <!-- Silent Status Callout -->
+  <rect x="75" y="260" width="200" height="70" rx="4" fill="#4f5d75" fill-opacity="0.06" stroke="#4f5d75" stroke-opacity="0.30" stroke-width="0.8"/>
+  <text x="175" y="280" fill="#2d3142" font-size="9.5" font-family="'Geist', sans-serif" font-weight="600" text-anchor="middle">Silent State Accumulation</text>
+  <text x="175" y="297" fill="#4f5d75" font-size="8.5" font-family="'Geist Mono', monospace" text-anchor="middle">Alerts Emitted: 0</text>
+  <text x="175" y="312" fill="#4f5d75" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle">(No premature fan-in alerts)</text>
+
+  <rect x="75" y="345" width="200" height="55" rx="4" fill="#2d3142" fill-opacity="0.03" stroke="#2d3142" stroke-opacity="0.12" stroke-width="0.8"/>
+  <text x="85" y="362" fill="#2d3142" font-size="8.5" font-family="'Geist Mono', monospace" font-weight="600">Guard Condition:</text>
+  <text x="85" y="377" fill="#4f5d75" font-size="8" font-family="'Geist Mono', monospace">Single-sender multi-transfers</text>
+  <text x="85" y="390" fill="#4f5d75" font-size="8" font-family="'Geist Mono', monospace">do NOT qualify as fan-in.</text>
+
+
+  <!-- NODE 2: Causal Outflow Box -->
+  <rect x="370" y="100" width="230" height="320" rx="6" fill="#f5f5f5"/>
+  <rect x="370" y="100" width="230" height="320" rx="6" fill="#ffffff" stroke="#2d3142" stroke-width="1"/>
+  <rect x="378" y="106" width="60" height="12" rx="2" fill="none" stroke="#2d3142" stroke-opacity="0.40" stroke-width="0.8"/>
+  <text x="408" y="115" fill="#2d3142" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.08em">TRIGGER</text>
+  <text x="485" y="134" fill="#2d3142" font-size="12" font-family="'Geist', sans-serif" font-weight="600" text-anchor="middle">Rapid Onward Transfer</text>
+
+  <!-- Sub-details for Node 2 -->
+  <rect x="385" y="150" width="200" height="42" rx="4" fill="#2d3142" fill-opacity="0.03" stroke="#2d3142" stroke-opacity="0.12" stroke-width="0.8"/>
+  <text x="395" y="166" fill="#2d3142" font-size="9" font-family="'Geist Mono', monospace" font-weight="500">Flow Ratio:</text>
+  <text x="475" y="166" fill="#2d3142" font-size="9" font-family="'Geist Mono', monospace" font-weight="600">≥ 80% of inflow</text>
+  <text x="395" y="182" fill="#4f5d75" font-size="8.5" font-family="'Geist Mono', monospace">sum(out) / max(sum(in), 1)</text>
+
+  <rect x="385" y="202" width="200" height="42" rx="4" fill="#2d3142" fill-opacity="0.03" stroke="#2d3142" stroke-opacity="0.12" stroke-width="0.8"/>
+  <text x="395" y="218" fill="#2d3142" font-size="9" font-family="'Geist Mono', monospace" font-weight="500">Pass-Through Time:</text>
+  <text x="502" y="218" fill="#2d3142" font-size="9" font-family="'Geist Mono', monospace" font-weight="600">≤ 10 min (600s)</text>
+  <text x="395" y="234" fill="#4f5d75" font-size="8.5" font-family="'Geist Mono', monospace">t_out - t_in ≥ 0s delay</text>
+
+  <!-- Causal Trigger Status -->
+  <rect x="385" y="260" width="200" height="70" rx="4" fill="#eb6c36" fill-opacity="0.08" stroke="#eb6c36" stroke-opacity="0.40" stroke-width="0.8"/>
+  <text x="485" y="280" fill="#2d3142" font-size="9.5" font-family="'Geist', sans-serif" font-weight="600" text-anchor="middle">Causal Evidence Emergence</text>
+  <text x="485" y="297" fill="#eb6c36" font-size="8.5" font-family="'Geist Mono', monospace" font-weight="600" text-anchor="middle">Causal Transfer Detected</text>
+  <text x="485" y="312" fill="#4f5d75" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle">(Evaluates counter-evidence)</text>
+
+  <rect x="385" y="345" width="200" height="55" rx="4" fill="#2d3142" fill-opacity="0.03" stroke="#2d3142" stroke-opacity="0.12" stroke-width="0.8"/>
+  <text x="395" y="362" fill="#2d3142" font-size="8.5" font-family="'Geist Mono', monospace" font-weight="600">Counterparty Check:</text>
+  <text x="395" y="377" fill="#4f5d75" font-size="8" font-family="'Geist Mono', monospace">Evaluates recipient history</text>
+  <text x="395" y="390" fill="#4f5d75" font-size="8" font-family="'Geist Mono', monospace">before committing verdict.</text>
+
+
+  <!-- NODE 3A: Suspicious Mule Network (Focal High Risk) -->
+  <rect x="680" y="100" width="280" height="150" rx="6" fill="#f5f5f5"/>
+  <rect x="680" y="100" width="280" height="150" rx="6" fill="#eb6c36" fill-opacity="0.08" stroke="#eb6c36" stroke-width="1.5"/>
+  <rect x="688" y="106" width="68" height="12" rx="2" fill="none" stroke="#eb6c36" stroke-opacity="0.60" stroke-width="0.8"/>
+  <text x="722" y="115" fill="#eb6c36" font-size="7" font-family="'Geist Mono', monospace" font-weight="600" text-anchor="middle" letter-spacing="0.08em">HIGH-RISK</text>
+  <text x="820" y="132" fill="#2d3142" font-size="12" font-family="'Geist', sans-serif" font-weight="600" text-anchor="middle">Suspicious Money Mule Network</text>
+  <text x="820" y="150" fill="#eb6c36" font-size="9" font-family="'Geist Mono', monospace" font-weight="600" text-anchor="middle">Risk Score: 100 · Severity: HIGH</text>
+  <text x="820" y="167" fill="#2d3142" font-size="8.5" font-family="'Geist Mono', monospace" text-anchor="middle">Action: escalate_for_review</text>
+  <rect x="695" y="180" width="250" height="55" rx="3" fill="#ffffff" stroke="#eb6c36" stroke-opacity="0.30" stroke-width="0.8"/>
+  <text x="705" y="196" fill="#2d3142" font-size="8" font-family="'Geist Mono', monospace" font-weight="600">Deterministic Reason Codes:</text>
+  <text x="705" y="210" fill="#4f5d75" font-size="7.5" font-family="'Geist Mono', monospace">• MULTI_SOURCE_INFLOW (3/3 senders)</text>
+  <text x="705" y="223" fill="#4f5d75" font-size="7.5" font-family="'Geist Mono', monospace">• RAPID_OUTFLOW · HIGH_FLOW_THROUGH</text>
+
+  <!-- NODE 3B: Legitimate Merchant Settlement (Mitigated) -->
+  <rect x="680" y="270" width="280" height="150" rx="6" fill="#f5f5f5"/>
+  <rect x="680" y="270" width="280" height="150" rx="6" fill="#2e5aa8" fill-opacity="0.06" stroke="#2e5aa8" stroke-width="1.2"/>
+  <rect x="688" y="276" width="62" height="12" rx="2" fill="none" stroke="#2e5aa8" stroke-opacity="0.50" stroke-width="0.8"/>
+  <text x="719" y="285" fill="#2e5aa8" font-size="7" font-family="'Geist Mono', monospace" font-weight="600" text-anchor="middle" letter-spacing="0.08em">MITIGATED</text>
+  <text x="820" y="302" fill="#2d3142" font-size="12" font-family="'Geist', sans-serif" font-weight="600" text-anchor="middle">Merchant Settlement Lookalike</text>
+  <text x="820" y="320" fill="#2e5aa8" font-size="9" font-family="'Geist Mono', monospace" font-weight="600" text-anchor="middle">Risk Score: 35 · Severity: MEDIUM</text>
+  <text x="820" y="337" fill="#2d3142" font-size="8.5" font-family="'Geist Mono', monospace" text-anchor="middle">Action: monitor_or_verify</text>
+  <rect x="695" y="350" width="250" height="55" rx="3" fill="#ffffff" stroke="#2e5aa8" stroke-opacity="0.30" stroke-width="0.8"/>
+  <text x="705" y="366" fill="#2d3142" font-size="8" font-family="'Geist Mono', monospace" font-weight="600">Corroborated Counter-Evidence:</text>
+  <text x="705" y="380" fill="#4f5d75" font-size="7.5" font-family="'Geist Mono', monospace">• ESTABLISHED_SETTLEMENT (-30 pts)</text>
+  <text x="705" y="393" fill="#4f5d75" font-size="7.5" font-family="'Geist Mono', monospace">• REPEATED_PAYMENT_PATTERN</text>
+</svg>'''
+
+    html_wrapper = f'''<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Blindspot · Detection &amp; Mitigation Flow</title>
+  <link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&amp;family=Geist:wght@400;500;600&amp;family=Geist+Mono:wght@400;500;600&amp;display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after {{ box-sizing: border-box; margin: 0; padding: 0; }}
+    :root {{
+      --color-paper:   #f5f5f5;
+      --color-ink:     #2d3142;
+      --color-muted:   #4f5d75;
+      --color-accent:  #eb6c36;
+      --font-sans:     'Geist', system-ui, sans-serif;
+      --font-serif:    'Instrument Serif', serif;
+      --font-mono:     'Geist Mono', ui-monospace, monospace;
+    }}
+    body {{
+      font-family: var(--font-sans);
+      background: var(--color-paper);
+      color: var(--color-ink);
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 2rem;
+    }}
+    .frame {{ max-width: 1100px; width: 100%; }}
+    .eyebrow {{
+      font-family: var(--font-mono);
+      font-size: 0.7rem;
+      font-weight: 500;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      color: var(--color-muted);
+      margin-bottom: 0.5rem;
+    }}
+    h1 {{
+      font-family: var(--font-serif);
+      font-size: 2rem;
+      font-weight: 400;
+      letter-spacing: -0.02em;
+      color: var(--color-ink);
+      margin-bottom: 1.5rem;
+    }}
+    svg {{ width: 100%; height: auto; display: block; border-radius: 8px; }}
+  </style>
+</head>
+<body>
+  <div class="frame">
+    <p class="eyebrow">Flowchart · Diagram Design</p>
+    <h1>Blindspot Causal Detection &amp; Mitigation Logic</h1>
+    {svg_content}
+  </div>
+</body>
+</html>'''
+
+    xml_header = '<?xml version="1.0" encoding="UTF-8"?>\n'
+
+    with open("docs/assets/detection-flow.html", "w", encoding="utf-8") as f:
+        f.write(html_wrapper)
+
+    with open("docs/assets/detection-flow.svg", "w", encoding="utf-8") as f:
+        f.write(xml_header + svg_content)
+
+    print("Detection flow diagram files created successfully.")
+
+if __name__ == "__main__":
+    generate_detection_flow()
