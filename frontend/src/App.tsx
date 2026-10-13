@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { api } from './api';
-import type { CaseDetail, CaseSummary, DemoStatus, Graph, List, Metrics, Transaction } from './types';
+import type { CaseDetail, CaseSummary, DemoStatus, Graph, List, Metrics, Transaction, EntityType } from './types';
 import { account, milliseconds, money, utc } from './format';
 import TransactionGraph from './TransactionGraph';
 import BenchmarkPanel from './BenchmarkPanel';
@@ -183,14 +183,44 @@ export default function App() {
   const recentGraph = useMemo<Graph>(() => {
     const nodes = new Map<string, Graph['nodes'][number]>();
     const edges: Graph['edges'] = [];
+    const caseItems = snapshot?.cases.items ?? [];
+    const highRiskAccounts = new Set(caseItems.map(c => c.subject_account_id));
+
     for (const tx of snapshot?.transactions.items ?? []) {
       const ids = [tx.source_account_id, tx.destination_account_id];
       if (nodes.size + ids.filter(id => !nodes.has(id)).length > 50) continue;
-      for (const id of ids) if (!nodes.has(id)) nodes.set(id, { id, label: account(id), role: id === tx.source_account_id ? 'source' : 'destination', risk_level: 'unknown' });
-      edges.push({ id: tx.transaction_id, source: tx.source_account_id, target: tx.destination_account_id, amount_minor: tx.amount_minor, currency: tx.currency, timestamp: tx.timestamp });
+      for (const id of ids) {
+        if (!nodes.has(id)) {
+          const isHighRisk = highRiskAccounts.has(id);
+          const entityType: EntityType = isHighRisk
+            ? 'subject'
+            : id.toLowerCase().includes('merch') || id.toLowerCase().includes('solids')
+            ? 'merchant'
+            : 'person';
+
+          nodes.set(id, {
+            id,
+            label: account(id),
+            role: id === tx.source_account_id ? 'source' : 'destination',
+            risk_level: isHighRisk ? 'high' : 'unknown',
+            entity_type: entityType,
+          });
+        }
+      }
+
+      const isHighRiskEdge = highRiskAccounts.has(tx.source_account_id) || highRiskAccounts.has(tx.destination_account_id);
+      edges.push({
+        id: tx.transaction_id,
+        source: tx.source_account_id,
+        target: tx.destination_account_id,
+        amount_minor: tx.amount_minor,
+        currency: tx.currency,
+        timestamp: tx.timestamp,
+        flow_type: isHighRiskEdge ? 'high_risk' : 'normal',
+      });
     }
     return { nodes: [...nodes.values()], edges };
-  }, [snapshot?.transactions]);
+  }, [snapshot?.transactions, snapshot?.cases]);
 
   const evidence = useMemo(() => [...(caseGraph?.edges ?? [])].sort((a, b) => Date.parse(a.timestamp) - Date.parse(b.timestamp) || a.id.localeCompare(b.id)), [caseGraph]);
   const fundFlow = useMemo(() => detail ? computeFundFlow(detail, caseGraph) : null, [detail, caseGraph]);

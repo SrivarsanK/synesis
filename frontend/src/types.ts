@@ -6,8 +6,27 @@ export interface List<T> { items: T[]; count: number }
 export interface CaseSummary { case_id: string; subject_account_id: string; title: string; status: 'open'; risk_score: number; severity: Severity; recommended_action: Action; created_at: string; updated_at: string; transaction_count: number; data_source: 'synthetic' }
 export interface Reason { code: string; transaction_ids: string[]; [key: string]: unknown }
 export interface CaseDetail extends Omit<CaseSummary, 'transaction_count'> { transaction_count?: number; reason_codes: Reason[]; transaction_ids: string[]; account_ids: string[] }
-export interface GraphNode { id: string; label: string; role: 'source' | 'intermediary' | 'destination'; risk_level: Severity | 'unknown' }
-export interface GraphEdge { id: string; source: string; target: string; amount_minor: number; currency: 'INR'; timestamp: string }
+export type EntityType = 'subject' | 'person' | 'merchant' | 'account' | 'address';
+export type LinkFlowType = 'high_risk' | 'normal' | 'association';
+
+export interface GraphNode {
+  id: string;
+  label: string;
+  role: 'source' | 'intermediary' | 'destination';
+  risk_level: Severity | 'unknown';
+  entity_type?: EntityType;
+  subtitle?: string;
+}
+export interface GraphEdge {
+  id: string;
+  source: string;
+  target: string;
+  amount_minor: number;
+  currency: 'INR';
+  timestamp: string;
+  flow_type?: LinkFlowType;
+  label?: string;
+}
 export interface Graph { case_id?: string; nodes: GraphNode[]; edges: GraphEdge[] }
 export interface DemoStatus { scenario: string; source_mode: 'synthetic'; next_index: number; total_events: number; complete: boolean; running: boolean }
 export interface IngestResult { transaction_id: string; accepted: boolean; duplicate: boolean; processing_latency_ms: number; updated_account_ids: string[]; case_ids_updated: string[] }
