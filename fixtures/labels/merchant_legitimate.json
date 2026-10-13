@@ -1,0 +1,8 @@
+{
+  "scenario_id": "merchant_legitimate",
+  "label": "benign",
+  "expected_account_ids": [
+    "merchant_legitimate:M"
+  ],
+  "earliest_detectable_event_id": null
+}

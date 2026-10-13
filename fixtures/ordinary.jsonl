@@ -1,0 +1,4 @@
+{"transaction_id":"ordinary-013","timestamp":"2026-10-13T10:00:00Z","source_account_id":"ordinary:P0","destination_account_id":"ordinary:Q0","amount_minor":150000,"currency":"INR","channel":"synthetic_stream","scenario_id":"ordinary"}
+{"transaction_id":"ordinary-014","timestamp":"2026-10-13T10:01:30Z","source_account_id":"ordinary:P1","destination_account_id":"ordinary:Q1","amount_minor":160000,"currency":"INR","channel":"synthetic_stream","scenario_id":"ordinary"}
+{"transaction_id":"ordinary-015","timestamp":"2026-10-13T10:03:00Z","source_account_id":"ordinary:P2","destination_account_id":"ordinary:Q2","amount_minor":170000,"currency":"INR","channel":"synthetic_stream","scenario_id":"ordinary"}
+{"transaction_id":"ordinary-016","timestamp":"2026-10-13T10:04:30Z","source_account_id":"ordinary:P3","destination_account_id":"ordinary:Q3","amount_minor":180000,"currency":"INR","channel":"synthetic_stream","scenario_id":"ordinary"}

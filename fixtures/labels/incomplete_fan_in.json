@@ -1,0 +1,8 @@
+{
+  "scenario_id": "incomplete_fan_in",
+  "label": "benign",
+  "expected_account_ids": [
+    "incomplete_fan_in:M"
+  ],
+  "earliest_detectable_event_id": null
+}

@@ -1,0 +1,8 @@
+{
+  "scenario_id": "insufficient_history",
+  "label": "benign",
+  "expected_account_ids": [
+    "insufficient_history:M"
+  ],
+  "earliest_detectable_event_id": null
+}

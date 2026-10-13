@@ -1,0 +1,8 @@
+{
+  "scenario_id": "held-21",
+  "label": "benign",
+  "expected_account_ids": [
+    "held-21:M"
+  ],
+  "earliest_detectable_event_id": null
+}

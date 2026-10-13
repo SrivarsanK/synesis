@@ -1,0 +1,5 @@
+{"transaction_id":"held-23-001","timestamp":"2026-10-13T10:00:00Z","source_account_id":"held-23:S0","destination_account_id":"held-23:M","amount_minor":5606022,"currency":"INR","channel":"synthetic_stream","scenario_id":"held-23"}
+{"transaction_id":"held-23-002","timestamp":"2026-10-13T10:03:09Z","source_account_id":"held-23:S1","destination_account_id":"held-23:M","amount_minor":5617559,"currency":"INR","channel":"synthetic_stream","scenario_id":"held-23"}
+{"transaction_id":"held-23-003","timestamp":"2026-10-13T10:06:18Z","source_account_id":"held-23:S2","destination_account_id":"held-23:M","amount_minor":5629096,"currency":"INR","channel":"synthetic_stream","scenario_id":"held-23"}
+{"transaction_id":"held-23-004","timestamp":"2026-10-13T10:09:27Z","source_account_id":"held-23:S3","destination_account_id":"held-23:M","amount_minor":5640633,"currency":"INR","channel":"synthetic_stream","scenario_id":"held-23"}
+{"transaction_id":"held-23-005","timestamp":"2026-10-13T10:10:12Z","source_account_id":"held-23:M","destination_account_id":"held-23:D","amount_minor":21143711,"currency":"INR","channel":"synthetic_stream","scenario_id":"held-23"}

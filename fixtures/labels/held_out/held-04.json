@@ -1,0 +1,8 @@
+{
+  "scenario_id": "held-04",
+  "label": "suspicious",
+  "expected_account_ids": [
+    "held-04:M"
+  ],
+  "earliest_detectable_event_id": "held-04-017"
+}

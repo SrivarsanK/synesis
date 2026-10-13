@@ -1,0 +1,48 @@
+{
+  "version": 1,
+  "project": {
+    "name": "blindspot.",
+    "productType": "Desktop investigation console for synthetic transactions",
+    "stack": ["Vite", "React", "TypeScript", "Cytoscape.js"]
+  },
+  "sources": {
+    "tokens": [],
+    "components": [],
+    "assets": [],
+    "instructions": [
+      "PRODUCT.md",
+      "AGENTS.md"
+    ]
+  },
+  "design": {
+    "colorMode": "dark",
+    "colors": {"bg":"#141210","surface":"#25221f","surface-raised":"#302b26","accent":"#d6a16b","text":"#f5f1e9","muted":"#b8aea3","border":"#39332d","danger":"#d95c59","success":"#2fa27f"},
+    "typography": {},
+    "spacing": {},
+    "radius": {},
+    "shadows": {},
+    "motion": {},
+    "density": "Desktop-first, dense evidence tables and spacious directed graph"
+  },
+  "components": {
+    "installed": [],
+    "preferredPrimitives": [],
+    "patterns": []
+  },
+  "constraints": {
+    "must": [],
+    "avoid": []
+  },
+  "decisions": ["Preserve docs/FRONTEND.md charcoal/champagne/gold tokens and system sans typography.", "One shell with monitor, investigation, and measured benchmarks; always display synthetic source.", "Use native accessible controls and textual evidence alongside Cytoscape canvas.", "21st search returned HTTP 401; no catalog component was retrieved."],
+  "evidence": [
+    {
+      "fact": "project.instructions",
+      "source": "AGENTS.md"
+    },
+    {
+      "fact": "project.instructions",
+      "source": "PRODUCT.md"
+    }
+  ],
+  "generatedAt": "2026-10-13T05:36:36.192Z"
+}

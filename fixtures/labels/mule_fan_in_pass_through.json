@@ -1,0 +1,8 @@
+{
+  "scenario_id": "mule_fan_in_pass_through",
+  "label": "suspicious",
+  "expected_account_ids": [
+    "mule_fan_in_pass_through:M"
+  ],
+  "earliest_detectable_event_id": "mule_fan_in_pass_through-016"
+}

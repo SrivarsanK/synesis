@@ -1,0 +1,1 @@
+{"transaction_id":"large_legitimate-013","timestamp":"2026-10-13T10:00:00Z","source_account_id":"large_legitimate:M","destination_account_id":"large_legitimate:D","amount_minor":12000000,"currency":"INR","channel":"synthetic_stream","scenario_id":"large_legitimate"}

@@ -1,0 +1,8 @@
+{
+  "scenario_id": "mule_staggered",
+  "label": "suspicious",
+  "expected_account_ids": [
+    "mule_staggered:M"
+  ],
+  "earliest_detectable_event_id": "mule_staggered-017"
+}

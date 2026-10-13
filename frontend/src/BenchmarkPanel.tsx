@@ -1,0 +1,10 @@
+import type { Metrics, MetricsRow } from './types';
+import { milliseconds, utc } from './format';
+export default function BenchmarkPanel({ metrics, error, retry }: { metrics: Metrics | null; error: string; retry: () => void }) {
+  if (error) return <section className="panel empty" role="alert"><h2>Evaluation unavailable</h2><p>{error}</p><button onClick={retry}>Retry metrics</button></section>;
+  if (!metrics) return <section className="panel empty" aria-busy="true">Loading evaluation…</section>;
+  if (!metrics.available) return <section className="panel empty"><h2>Not yet measured</h2><p>Run the backend evaluation to populate this comparison.</p><p>Metrics not yet measured on held-out scenarios. No estimated results are shown.</p><button onClick={retry}>Refresh metrics</button></section>;
+  const percent = (n: number | null) => n === null ? 'Not defined' : `${(n * 100).toFixed(1)}%`;
+  const rows: [string, MetricsRow][] = [['Rules-only baseline', metrics.baseline], ['Blindspot', metrics.blindspot]];
+  return <section className="panel benchmark"><div className="section-heading"><div><h2>Measured comparison</h2><p>{metrics.dataset} · {metrics.scenario_count} scenarios · unit: {metrics.evaluation_unit}</p></div><button onClick={retry}>Refresh metrics</button></div><div className="table-scroll"><table><caption>Held-out synthetic evaluation · {utc(metrics.evaluated_at)}</caption><thead><tr>{['Detector', 'TP', 'FP', 'FN', 'TN', 'Precision', 'Recall', 'FPR', 'Events sampled', 'p50', 'p95'].map(h => <th key={h}>{h}</th>)}</tr></thead><tbody>{rows.map(([name, row]) => <tr key={name}><th scope="row">{name}</th><td>{row.tp}</td><td>{row.fp}</td><td>{row.fn}</td><td>{row.tn}</td><td>{percent(row.precision)}</td><td>{percent(row.recall)}</td><td>{percent(row.false_positive_rate)}</td><td>{row.sampled_event_count}</td><td>{milliseconds(row.latency_p50_ms)}</td><td>{milliseconds(row.latency_p95_ms)}</td></tr>)}</tbody></table></div><p className="footnote">Positive prediction: high-severity escalation for human review. Latencies measure backend event processing. Synthetic results do not establish real-world performance.</p></section>;
+}
