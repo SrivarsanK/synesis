@@ -125,7 +125,9 @@ pub fn analyze_transactions(
             None => date_part,
         });
 
-        let day_entry = daily_map.entry(date_part.to_string()).or_insert((0, 0.0, 0.0));
+        let day_entry = daily_map
+            .entry(date_part.to_string())
+            .or_insert((0, 0.0, 0.0));
         day_entry.0 += 1;
 
         match tx.direction {

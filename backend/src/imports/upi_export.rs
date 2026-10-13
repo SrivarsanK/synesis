@@ -1,6 +1,4 @@
-use super::normalize::{
-    Direction, ImportFormat, NormalizedTransaction, TimestampPrecision,
-};
+use super::normalize::{Direction, ImportFormat, NormalizedTransaction, TimestampPrecision};
 use crate::types::ApiError;
 use chrono::{NaiveDate, NaiveTime};
 
@@ -57,19 +55,20 @@ pub fn parse_upi_export(
             account_col = Some(i);
         } else if lower.contains("amount") {
             amount_col = Some(i);
-        } else if lower.contains("upi") || lower.contains("transaction_id") || lower.contains("reference") {
+        } else if lower.contains("upi")
+            || lower.contains("transaction_id")
+            || lower.contains("reference")
+        {
             upi_id_col = Some(i);
         } else if lower.contains("note") {
             _note_col = Some(i);
         }
     }
 
-    let date_idx = date_col.ok_or_else(|| {
-        ApiError::bad("MISSING_COLUMN", "UPI export missing 'date' column")
-    })?;
-    let amount_idx = amount_col.ok_or_else(|| {
-        ApiError::bad("MISSING_COLUMN", "UPI export missing 'amount' column")
-    })?;
+    let date_idx = date_col
+        .ok_or_else(|| ApiError::bad("MISSING_COLUMN", "UPI export missing 'date' column"))?;
+    let amount_idx = amount_col
+        .ok_or_else(|| ApiError::bad("MISSING_COLUMN", "UPI export missing 'amount' column"))?;
 
     let mut transactions = Vec::new();
     let mut row_num = header_line_index + 1;

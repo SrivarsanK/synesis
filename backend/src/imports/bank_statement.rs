@@ -80,7 +80,10 @@ pub fn parse_bank_statement(
             tran_date_col = Some(i);
         } else if lower.contains("chq") {
             _chqno_col = Some(i);
-        } else if lower.contains("particular") || lower.contains("description") || lower.contains("narration") {
+        } else if lower.contains("particular")
+            || lower.contains("description")
+            || lower.contains("narration")
+        {
             particulars_col = Some(i);
         } else if lower == "dr" || lower.contains("debit") || lower.contains("withdrawal") {
             dr_col = Some(i);
@@ -94,10 +97,16 @@ pub fn parse_bank_statement(
     }
 
     let tran_date_idx = tran_date_col.ok_or_else(|| {
-        ApiError::bad("MISSING_COLUMN", "Bank statement missing 'Tran Date' column")
+        ApiError::bad(
+            "MISSING_COLUMN",
+            "Bank statement missing 'Tran Date' column",
+        )
     })?;
     let particulars_idx = particulars_col.ok_or_else(|| {
-        ApiError::bad("MISSING_COLUMN", "Bank statement missing 'PARTICULARS' column")
+        ApiError::bad(
+            "MISSING_COLUMN",
+            "Bank statement missing 'PARTICULARS' column",
+        )
     })?;
 
     let mut transactions = Vec::new();
@@ -234,7 +243,8 @@ fn extract_counterparty(particulars: &str) -> Option<String> {
             let p = part.trim();
             if p.len() >= 3
                 && !p.chars().all(|c| c.is_ascii_digit())
-                && !["UPI", "P2P", "P2M", "CR", "DR", "REV", "REV-UPI"].contains(&p.to_uppercase().as_str())
+                && !["UPI", "P2P", "P2M", "CR", "DR", "REV", "REV-UPI"]
+                    .contains(&p.to_uppercase().as_str())
             {
                 return Some(p.to_string());
             }

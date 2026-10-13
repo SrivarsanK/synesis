@@ -75,7 +75,10 @@ pub fn router(engine: Engine) -> Router {
         .route("/api/imports/preview", post(import_preview))
         .route("/api/imports/analyze", post(import_analyze))
         .route("/api/imports/samples", get(import_samples))
-        .route("/api/imports/samples/{id}/analyze", post(import_sample_analyze))
+        .route(
+            "/api/imports/samples/{id}/analyze",
+            post(import_sample_analyze),
+        )
         .fallback(|| async {
             (
                 StatusCode::NOT_FOUND,
@@ -209,9 +212,7 @@ async fn import_samples() -> Result<Json<Value>, ApiError> {
     })))
 }
 
-async fn import_sample_analyze(
-    Path(id): Path<String>,
-) -> Result<Json<Value>, ApiError> {
+async fn import_sample_analyze(Path(id): Path<String>) -> Result<Json<Value>, ApiError> {
     let filename = match id.as_str() {
         "bank_statement_period1" => "bank_statement_period1.csv",
         "bank_statement_period2" => "bank_statement_period2.csv",
@@ -232,4 +233,3 @@ async fn import_sample_analyze(
         "analysis": analysis,
     })))
 }
-

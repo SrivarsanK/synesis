@@ -1,6 +1,4 @@
-use blindspot::imports::{
-    self, ImportFormat, TimestampPrecision,
-};
+use blindspot::imports::{self, ImportFormat, TimestampPrecision};
 use std::fs;
 use std::path::PathBuf;
 
@@ -27,7 +25,10 @@ fn test_bank_statement_period1_kaaviya() {
 
     let meta = preview.metadata.expect("metadata extracted");
     assert_eq!(meta.account_holder.as_deref(), Some("Kaaviya R"));
-    assert_eq!(meta.account_number_masked.as_deref(), Some("XXXX-XXXX-5610"));
+    assert_eq!(
+        meta.account_number_masked.as_deref(),
+        Some("XXXX-XXXX-5610")
+    );
 
     let range = preview.date_range.expect("date range");
     assert!(range.start.starts_with("2025-07"));
@@ -73,7 +74,10 @@ fn test_upi_export_srivarsan() {
     assert_eq!(preview.direction_counts.self_transfer, 6);
 
     // Missing time summary should mention 8 rows
-    assert!(preview.missing_fields_summary.iter().any(|s| s.contains("8 transaction(s)")));
+    assert!(preview
+        .missing_fields_summary
+        .iter()
+        .any(|s| s.contains("8 transaction(s)")));
 
     let (txs, _) = (
         imports::upi_export::parse_upi_export(&content, 0).expect("parse txs"),
