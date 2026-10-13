@@ -92,3 +92,30 @@ A cold-start user opens one desktop dashboard; steps synthetic events; sees grap
 ## Final output from a coding agent
 
 Provide: (1) run commands, (2) completed features, (3) test/build summary, (4) real benchmark setup and results if run, (5) limitations, (6) next-step P1 suggestions **only after P0 is complete**. If a requirement is not built, state that clearly.
+
+## Feature branching and atomic commit protocol
+
+All coding agents working on new features, enhancements, or bug fixes MUST follow this branch-and-merge lifecycle:
+
+1. **Branch creation for new tasks:**
+   - Always create and switch to a dedicated branch from `main` before starting any work:
+     ```bash
+     git checkout -b feature/<task-name>
+     # or fix/<issue-name>, refactor/<component-name>
+     ```
+   - Never make modifications directly on `main`.
+
+2. **Atomic commits:**
+   - Commit changes atomically. Each commit must represent a single, cohesive, working unit of work.
+   - Run relevant unit/build checks before committing; do not commit broken states.
+   - Use descriptive commit messages following conventional commits (`feat: ...`, `fix: ...`, `test: ...`).
+
+3. **Verification and merge upon task completion:**
+   - Once the task passes all quality gates (`cargo test`, `npm run build`, `qa/harness.mjs`):
+     ```bash
+     git checkout main
+     git merge --no-ff feature/<task-name> -m "feat(<scope>): complete <task-name>"
+     git branch -d feature/<task-name>
+     ```
+   - Delete the temporary feature branch after a successful merge to keep repository history clean and linear.
+
