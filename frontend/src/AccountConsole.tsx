@@ -9,6 +9,66 @@ import type {
 import { inr, money } from './format';
 import TransactionGraph from './TransactionGraph';
 
+/* --- Inline Minimalist SVG Icons (Anti-Slop, No Emojis) --- */
+const IconBank = () => (
+  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+    <path d="M3 21h18M3 10h18M5 10v11M19 10v11M9 10v11M15 10v11M12 2l10 5H2l10-5z" />
+  </svg>
+);
+
+const IconUpload = () => (
+  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M17 8l-5-5-5 5M12 3v12" />
+  </svg>
+);
+
+const IconCheck = () => (
+  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+    <polyline points="20 6 9 17 4 12" />
+  </svg>
+);
+
+const IconShield = () => (
+  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+    <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
+  </svg>
+);
+
+const IconSearch = () => (
+  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+    <circle cx="11" cy="11" r="8" />
+    <line x1="21" y1="21" x2="16.65" y2="16.65" />
+  </svg>
+);
+
+const IconNetwork = () => (
+  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+    <circle cx="6" cy="6" r="3" />
+    <circle cx="18" cy="18" r="3" />
+    <circle cx="18" cy="6" r="3" />
+    <line x1="8.5" y1="7.5" x2="15.5" y2="16.5" />
+    <line x1="15.5" y1="7.5" x2="8.5" y2="16.5" />
+  </svg>
+);
+
+const IconList = () => (
+  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+    <line x1="8" y1="6" x2="21" y2="6" />
+    <line x1="8" y1="12" x2="21" y2="12" />
+    <line x1="8" y1="18" x2="21" y2="18" />
+    <line x1="3" y1="6" x2="3.01" y2="6" />
+    <line x1="3" y1="12" x2="3.01" y2="12" />
+    <line x1="3" y1="18" x2="3.01" y2="18" />
+  </svg>
+);
+
+const IconArrowRight = () => (
+  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+    <line x1="5" y1="12" x2="19" y2="12" />
+    <polyline points="12 5 19 12 12 19" />
+  </svg>
+);
+
 interface BankOption {
   id: string;
   name: string;
@@ -203,10 +263,14 @@ export default function AccountConsole({
       loadSample(modalSelectedBank.sampleId, modalSelectedBank, 'bank_login');
       setShowBankModal(false);
       setModalStep('select_bank');
-    }, 1200);
+    }, 1100);
   };
 
   const inspectAnomaly = (idx: number, txIds: string[]) => {
+    if (selectedAnomalyIndex === idx) {
+      clearAnomalyFilter();
+      return;
+    }
     setSelectedAnomalyIndex(idx);
     setHighlightAnomalyTxIds(txIds);
     setDirectionFilter('all');
@@ -286,38 +350,47 @@ export default function AccountConsole({
 
   return (
     <div className="account-console-layout">
-      {/* 1. Ingestion Hero Banner: Bank Login or Statement Upload */}
-      <section className="panel account-hero-panel">
-        <div className="account-hero-top">
-          <div className="account-hero-titles">
-            <div className="hero-badge-row">
-              <span className="live-status-pill">
-                <i className="status-dot-pulse" />
-                {connectionMethod === 'bank_login'
-                  ? 'Connected via Open Banking AA'
-                  : connectionMethod === 'statement_upload'
-                  ? 'Active Statement Ingestion'
-                  : 'Account Risk Workspace'}
-              </span>
-              <span className="platform-tag">General Risk Intelligence</span>
+      {/* 1. Master Command Deck: Identity, Quick Profile Switcher & Ingestion Actions */}
+      <section className="panel master-command-deck" aria-label="Account controls">
+        <div className="deck-main-row">
+          {/* Left: Active Entity Identity */}
+          <div className="deck-identity-cell">
+            <div className="deck-avatar-badge" style={{ backgroundColor: activeBank.color }}>
+              {activeBank.name.slice(0, 2).toUpperCase()}
             </div>
-            <h1>Account Financial Risk &amp; Behavioral Console</h1>
-            <p className="hero-subtext">
-              Login directly to link your bank account, or upload your transaction statement history.
-              Blindspot normalizes and analyzes cash flows, anomaly deviations, and counterparty risks.
-            </p>
+            <div className="deck-identity-meta">
+              <div className="deck-title-line">
+                <h2>{activeBank.accountHolder}</h2>
+                <span className="deck-type-tag">{activeBank.tag}</span>
+                <span className="deck-verified-tag">
+                  <IconCheck /> Verified
+                </span>
+              </div>
+              <p className="deck-sub-line">
+                <code>{preview?.metadata?.account_number_masked || activeBank.maskedAccount}</code>
+                <span className="deck-bullet">·</span>
+                <span>{activeBank.name}</span>
+                <span className="deck-bullet">·</span>
+                <span className="deck-date-span">
+                  {preview?.date_range ? `${preview.date_range.start} → ${preview.date_range.end}` : activeBank.period}
+                </span>
+                <span className="deck-bullet">·</span>
+                <strong>{preview?.valid_transactions ?? activeBank.recordCount} records</strong>
+              </p>
+            </div>
           </div>
 
-          <div className="account-hero-actions">
+          {/* Right: Ingestion Action CTAs */}
+          <div className="deck-actions-cluster">
             <button
               type="button"
-              className="primary connect-bank-btn"
+              className="primary deck-cta-btn"
               onClick={() => {
                 setShowBankModal(true);
                 setModalStep('select_bank');
               }}
             >
-              <span className="btn-icon">🏦</span> Connect Bank Account
+              <IconBank /> Connect Bank Account
             </button>
             <input
               type="file"
@@ -328,332 +401,366 @@ export default function AccountConsole({
             />
             <button
               type="button"
-              className="secondary upload-csv-btn"
+              className="secondary deck-cta-btn"
               onClick={() => fileInputRef.current?.click()}
             >
-              <span className="btn-icon">📁</span> Upload Statement CSV
+              <IconUpload /> Upload Statement CSV
             </button>
           </div>
         </div>
 
-        {/* Quick Account Switcher Ribbon */}
-        <div className="account-switcher-ribbon">
-          <span className="ribbon-label">Quick switch profile:</span>
-          <div className="ribbon-banks-list">
-            {BANKS.map((b) => (
-              <button
-                key={b.id}
-                type="button"
-                className={`bank-pill-btn ${selectedSample === b.sampleId ? 'active' : ''}`}
-                onClick={() => loadSample(b.sampleId, b, 'sample')}
-              >
-                <span className="bank-logo-chip" style={{ backgroundColor: b.color }}>
-                  {b.name.slice(0, 2).toUpperCase()}
-                </span>
-                <span className="bank-pill-text">
-                  <strong>{b.name}</strong>
-                  <small>{b.accountHolder} · {b.recordCount} txs</small>
-                </span>
-              </button>
-            ))}
+        {/* Institutional Profile Switcher Ribbon */}
+        <div className="deck-switcher-bar">
+          <span className="deck-switcher-label">Profiles:</span>
+          <div className="deck-switcher-pills">
+            {BANKS.map((b) => {
+              const isActive = selectedSample === b.sampleId;
+              return (
+                <button
+                  key={b.id}
+                  type="button"
+                  className={`deck-pill-btn ${isActive ? 'active' : ''}`}
+                  onClick={() => loadSample(b.sampleId, b, 'sample')}
+                >
+                  <span className="pill-dot" style={{ backgroundColor: b.color }} />
+                  <span className="pill-bank-name">{b.name}</span>
+                  <span className="pill-tx-count">{b.recordCount} txs</span>
+                </button>
+              );
+            })}
           </div>
-        </div>
-      </section>
 
-      {/* 2. Account Grouping Notification (If consecutive statements available) */}
-      {(selectedSample === 'bank_statement_period1' || selectedSample === 'bank_statement_period2') && (
-        <section className="panel consecutive-grouping-banner">
-          <div className="grouping-banner-left">
-            <span className="grouping-tag">Consecutive Statement Available</span>
-            <strong>Unified Timeline Recommendation</strong>
-            <p>
-              Both statements belong to verified account <code>XXXX-XXXX-5610</code> (Kaaviya R). You can merge
-              Period 1 (505 txs) and Period 2 (817 txs) into a unified 1,322-transaction timeline for comprehensive rolling baseline analysis.
-            </p>
+          {connectionMethod === 'bank_login' && (
+            <span className="deck-status-indicator">
+              <span className="indicator-dot live" /> Open Banking AA Tunnel Active
+            </span>
+          )}
+        </div>
+
+        {/* Consecutive Statement Recommendation Banner (Embedded in Deck) */}
+        {(selectedSample === 'bank_statement_period1' || selectedSample === 'bank_statement_period2') && (
+          <div className="deck-inline-banner">
+            <div className="deck-banner-copy">
+              <span className="deck-banner-badge">Consecutive Periods Detected</span>
+              <span>
+                Statement matches account <code>XXXX-XXXX-5610</code>. Combine Period 1 (505) and Period 2 (817) for unified 1,322-tx rolling velocity baseline.
+              </span>
+            </div>
+            <button
+              type="button"
+              className="deck-banner-action"
+              onClick={() => loadSample('bank_statement_combined', BANKS[2], 'sample')}
+            >
+              Merge Full Year (1,322 txs) <IconArrowRight />
+            </button>
           </div>
-          <button
-            type="button"
-            className="primary combine-btn"
-            onClick={() => loadSample('bank_statement_combined', BANKS[2], 'sample')}
-          >
-            Combine into Full Year (1,322 txs) →
-          </button>
-        </section>
-      )}
+        )}
+      </section>
 
       {/* Error Banner */}
       {error && (
         <div className="error-banner" role="alert">
-          <span>Failed to load account data. {error}</span>
-          <button onClick={() => loadSample(selectedSample, activeBank, connectionMethod)}>Retry</button>
+          <span>Failed to process transaction data: {error}</span>
+          <button onClick={() => loadSample(selectedSample, activeBank, connectionMethod)}>Retry Sync</button>
         </div>
       )}
 
-      {/* Loading State */}
+      {/* Loading Skeletal State */}
       {loading && (
-        <div className="panel empty" aria-busy="true">
-          <h3>Analyzing transaction history…</h3>
-          <p>Extracting counterparties, evaluating rolling baseline velocity, and computing anomaly scores.</p>
+        <div className="panel skeletal-loading-panel" aria-busy="true">
+          <div className="skeletal-spinner" />
+          <h3>Evaluating Financial Baseline &amp; Behavioral Velocity…</h3>
+          <p>Processing transactions, scoring counterparty volume, and detecting rolling statistical anomalies.</p>
         </div>
       )}
 
       {preview && analysis && !loading && (
         <>
-          {/* 3. Active Account Status & Summary Header */}
-          <section className="panel active-account-status-panel">
-            <div className="account-badge-header">
-              <div className="account-main-meta">
-                <div className="account-institution-avatar" style={{ backgroundColor: activeBank.color }}>
-                  {activeBank.name.slice(0, 2).toUpperCase()}
-                </div>
-                <div>
-                  <div className="account-name-line">
-                    <h2>{activeBank.accountHolder}</h2>
-                    <span className="account-type-tag">{activeBank.tag}</span>
-                    <span className="verified-badge">✓ Verified Entity</span>
-                  </div>
-                  <p className="account-number-sub">
-                    {preview.metadata?.account_number_masked || activeBank.maskedAccount} · {activeBank.name}
-                  </p>
-                </div>
-              </div>
-
-              <div className="account-period-meta">
-                <div className="period-box">
-                  <span className="period-label">Analyzed Period</span>
-                  <strong>{preview.date_range ? `${preview.date_range.start} → ${preview.date_range.end}` : activeBank.period}</strong>
-                </div>
-                <div className="records-box">
-                  <span className="period-label">Total Volume</span>
-                  <strong className="accent-color">{preview.valid_transactions} Records</strong>
-                </div>
-              </div>
+          {/* 2. Financial Ledger Baseline Strip (5 Executive Metrics) */}
+          <section className="financial-kpi-grid" aria-label="Financial baseline summary">
+            <div className="kpi-ledger-card debit-card">
+              <span className="kpi-label">Total Outflows (Debits)</span>
+              <strong className="kpi-value danger-text">
+                -{inr(Math.round(analysis.summary.total_debit_inr * 100))}
+              </strong>
+              <small className="kpi-foot">{analysis.summary.debit_count} outward payments</small>
             </div>
 
-            {/* Architecture Scope Notice */}
-            <div className="scope-explanation-strip">
-              <span className="scope-info-icon">ℹ</span>
-              <p>
-                <strong>Personal Account Scope:</strong> Behavioral metrics evaluate historical deviations (spending bursts,
-                unusual outflows, velocity spikes) within this account. For multi-account coordinated money-mule networks, visit the{' '}
-                <button type="button" className="inline-link-btn" onClick={onSwitchToNetwork}>
-                  AML Network Monitor
-                </button>.
-              </p>
+            <div className="kpi-ledger-card credit-card">
+              <span className="kpi-label">Total Inflows (Credits)</span>
+              <strong className="kpi-value success-text">
+                +{inr(Math.round(analysis.summary.total_credit_inr * 100))}
+              </strong>
+              <small className="kpi-foot">{analysis.summary.credit_count} incoming deposits</small>
             </div>
-          </section>
 
-          {/* 4. Financial Baseline Metrics Strip */}
-          <section className="panel metrics-strip account-metrics-strip" aria-label="Account cash flow metrics">
-            <div>
-              <span>Total Outflows (Debits)</span>
-              <strong className="danger">{inr(Math.round(analysis.summary.total_debit_inr * 100))}</strong>
-              <small>{analysis.summary.debit_count} outward transfers</small>
-            </div>
-            <div>
-              <span>Total Inflows (Credits)</span>
-              <strong className="success">{inr(Math.round(analysis.summary.total_credit_inr * 100))}</strong>
-              <small>{analysis.summary.credit_count} inward deposits</small>
-            </div>
-            <div>
-              <span>Net Cash Flow</span>
-              <strong className={analysis.summary.net_flow_inr >= 0 ? 'success' : 'danger'}>
+            <div className="kpi-ledger-card net-card">
+              <span className="kpi-label">Net Cash Position</span>
+              <strong className={`kpi-value ${analysis.summary.net_flow_inr >= 0 ? 'success-text' : 'danger-text'}`}>
                 {analysis.summary.net_flow_inr >= 0 ? '+' : ''}{inr(Math.round(analysis.summary.net_flow_inr * 100))}
               </strong>
-              <small>{analysis.summary.net_flow_inr >= 0 ? 'Positive retained flow' : 'Net negative drain'}</small>
+              <small className="kpi-foot">
+                {analysis.summary.net_flow_inr >= 0 ? 'Net retained liquidity' : 'Net liquidity contraction'}
+              </small>
             </div>
-            <div>
-              <span>Average Outward Payment</span>
-              <strong>{inr(Math.round(analysis.summary.average_debit_inr * 100))}</strong>
-              <small>Historical baseline mean</small>
+
+            <div className="kpi-ledger-card baseline-card">
+              <span className="kpi-label">Avg Outward Transfer</span>
+              <strong className="kpi-value mono-text">
+                {inr(Math.round(analysis.summary.average_debit_inr * 100))}
+              </strong>
+              <small className="kpi-foot">Rolling historical mean</small>
             </div>
-            <div>
-              <span>Largest Single Outflow</span>
-              <strong className="accent-color">{inr(Math.round(analysis.summary.max_debit_inr * 100))}</strong>
-              <small>Peak outflow transaction</small>
+
+            <div className="kpi-ledger-card peak-card">
+              <span className="kpi-label">Peak Outflow Outlier</span>
+              <strong className="kpi-value accent-text">
+                {inr(Math.round(analysis.summary.max_debit_inr * 100))}
+              </strong>
+              <small className="kpi-foot">Max single transaction</small>
             </div>
           </section>
 
-          {/* 5. Behavioral Anomaly Intelligence Findings */}
-          <section className="panel personal-anomalies-panel">
-            <div className="section-heading">
-              <div>
-                <h2>Behavioral Anomaly Findings ({analysis.anomalies.length})</h2>
-                <p>Identified deviations against rolling account baseline thresholds</p>
-              </div>
-              {highlightAnomalyTxIds.length > 0 && (
-                <button type="button" className="secondary" onClick={clearAnomalyFilter}>
-                  ✕ Clear transaction filter
-                </button>
-              )}
-            </div>
-
-            {analysis.anomalies.length === 0 ? (
-              <div className="empty-anomalies">
-                <p>No high-severity personal anomalies identified for this period. Spending follows regular distribution.</p>
-              </div>
-            ) : (
-              <div className="anomalies-list-grid">
-                {analysis.anomalies.map((an, idx) => {
-                  const isSelected = selectedAnomalyIndex === idx;
-                  return (
-                    <div
-                      key={idx}
-                      className={`anomaly-card severity-${an.severity} ${isSelected ? 'selected-anomaly' : ''}`}
-                    >
-                      <div className="anomaly-card-top">
-                        <span className={`anomaly-badge ${an.severity}`}>{an.severity.toUpperCase()}</span>
-                        <span className="anomaly-type-code">{an.anomaly_type}</span>
-                        {an.date && <span className="anomaly-date">{an.date.slice(0, 10)}</span>}
-                      </div>
-
-                      <h3 className="anomaly-title">{an.title}</h3>
-                      <p className="anomaly-description">{an.description}</p>
-
-                      <div className="anomaly-metrics-strip">
-                        <div>
-                          <span>Observed:</span>
-                          <strong>{an.metric_observed}</strong>
-                        </div>
-                        <div>
-                          <span>Threshold:</span>
-                          <strong>{an.threshold}</strong>
-                        </div>
-                      </div>
-
-                      <div className="anomaly-card-footer">
-                        <button
-                          type="button"
-                          className={`filter-tx-btn ${isSelected ? 'active' : ''}`}
-                          onClick={() => inspectAnomaly(idx, an.transaction_ids)}
-                        >
-                          {isSelected
-                            ? `✓ Viewing ${an.transaction_ids.length} supporting transaction(s) below ↓`
-                            : `Inspect ${an.transaction_ids.length} supporting transaction(s) →`}
-                        </button>
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-            )}
-          </section>
-
-          {/* 6. Fund Flow Graph vs Top Counterparties Grid */}
-          <div className="account-split-row">
-            {/* Top Counterparties / Merchants */}
-            <section className="panel counterparties-panel flex-1">
+          {/* 3. Asymmetric Section: Behavioral Anomalies (Left) + Top Counterparties & Ego Network (Right) */}
+          <div className="account-asymmetric-grid">
+            {/* Left: Behavioral Deviations & Anomalies */}
+            <section className="panel anomalies-column" aria-label="Behavioral anomaly detections">
               <div className="section-heading">
                 <div>
-                  <h2>Top Counterparties &amp; Merchants</h2>
-                  <p>Highest frequency and volume beneficiaries</p>
+                  <h2>Behavioral Deviations &amp; Risk Flags</h2>
+                  <p>Statistical anomalies exceeding rolling velocity and volume thresholds</p>
                 </div>
-                <button
-                  type="button"
-                  className="secondary"
-                  onClick={() => setViewGraph(!viewGraph)}
-                >
-                  {viewGraph ? 'Show Merchant List' : 'Show Flow Graph'}
-                </button>
+                <div className="heading-actions">
+                  <span className="count-badge">{analysis.anomalies.length} Flags</span>
+                  {highlightAnomalyTxIds.length > 0 && (
+                    <button type="button" className="ghost-btn" onClick={clearAnomalyFilter}>
+                      Reset Filter ✕
+                    </button>
+                  )}
+                </div>
+              </div>
+
+              {analysis.anomalies.length === 0 ? (
+                <div className="empty-state-card">
+                  <IconCheck />
+                  <p>No high-deviation personal anomalies identified for this period. Cash flow conforms to historical baseline.</p>
+                </div>
+              ) : (
+                <div className="anomalies-deck-list">
+                  {analysis.anomalies.map((an, idx) => {
+                    const isSelected = selectedAnomalyIndex === idx;
+                    return (
+                      <div
+                        key={idx}
+                        className={`anomaly-editorial-card ${an.severity} ${isSelected ? 'active-inspected' : ''}`}
+                      >
+                        <div className="card-top-row">
+                          <div className="badge-type-wrap">
+                            <span className={`severity-tag ${an.severity}`}>{an.severity.toUpperCase()}</span>
+                            <span className="anomaly-code-tag">{an.anomaly_type}</span>
+                          </div>
+                          {an.date && <span className="anomaly-timestamp">{an.date.slice(0, 10)}</span>}
+                        </div>
+
+                        <h3 className="anomaly-card-title">{an.title}</h3>
+                        <p className="anomaly-card-desc">{an.description}</p>
+
+                        <div className="anomaly-data-pills">
+                          <div className="data-pill">
+                            <span className="pill-caption">Observed Value</span>
+                            <strong>{an.metric_observed}</strong>
+                          </div>
+                          <div className="data-pill">
+                            <span className="pill-caption">Baseline Threshold</span>
+                            <strong>{an.threshold}</strong>
+                          </div>
+                        </div>
+
+                        <div className="anomaly-card-actions">
+                          <button
+                            type="button"
+                            className={`inspect-filter-btn ${isSelected ? 'selected' : ''}`}
+                            onClick={() => inspectAnomaly(idx, an.transaction_ids)}
+                          >
+                            {isSelected ? (
+                              <>
+                                <IconCheck /> Viewing {an.transaction_ids.length} supporting transaction(s) below
+                              </>
+                            ) : (
+                              <>
+                                Inspect {an.transaction_ids.length} supporting transaction(s) <IconArrowRight />
+                              </>
+                            )}
+                          </button>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </section>
+
+            {/* Right: Counterparties & Flow Network */}
+            <section className="panel counterparties-column" aria-label="Counterparties breakdown">
+              <div className="section-heading">
+                <div>
+                  <h2>Top Beneficiaries &amp; Flow</h2>
+                  <p>Highest frequency &amp; volume counterparties</p>
+                </div>
+                <div className="view-toggle-group">
+                  <button
+                    type="button"
+                    className={`toggle-icon-btn ${!viewGraph ? 'active' : ''}`}
+                    onClick={() => setViewGraph(false)}
+                    title="List View"
+                  >
+                    <IconList /> List
+                  </button>
+                  <button
+                    type="button"
+                    className={`toggle-icon-btn ${viewGraph ? 'active' : ''}`}
+                    onClick={() => setViewGraph(true)}
+                    title="Network Graph View"
+                  >
+                    <IconNetwork /> Graph
+                  </button>
+                </div>
               </div>
 
               {viewGraph ? (
-                <div className="account-graph-container">
-                  <TransactionGraph graph={accountGraph} identity={activeBank.id} />
+                <div className="account-ego-network-card">
+                  <div className="graph-wrapper-frame">
+                    <TransactionGraph graph={accountGraph} identity={activeBank.id} />
+                  </div>
+                  <div className="network-legend-bar">
+                    <span className="legend-item">
+                      <span className="legend-dot central" /> {activeBank.accountHolder} (Account)
+                    </span>
+                    <span className="legend-item">
+                      <span className="legend-dot external" /> Beneficiary Nodes
+                    </span>
+                  </div>
                 </div>
               ) : (
-                <div className="counterparties-grid">
-                  {analysis.top_counterparties.slice(0, 8).map((cp, idx) => (
-                    <div
-                      key={idx}
-                      className="counterparty-card clickable"
-                      onClick={() => filterByCounterparty(cp.counterparty)}
-                      title={`Filter table for ${cp.counterparty}`}
-                    >
-                      <div className="cp-header">
-                        <strong className="cp-name">{cp.counterparty}</strong>
-                        <span className="cp-count">{cp.transaction_count} txs</span>
+                <div className="counterparty-ledger-list">
+                  {analysis.top_counterparties.slice(0, 8).map((cp, idx) => {
+                    const maxAmount = analysis.top_counterparties[0]?.total_amount_inr || 1;
+                    const percent = Math.min(100, Math.round((cp.total_amount_inr / maxAmount) * 100));
+                    const isFiltered = searchQuery === cp.counterparty;
+
+                    return (
+                      <div
+                        key={idx}
+                        className={`cp-ledger-row ${isFiltered ? 'active-filter' : ''}`}
+                        onClick={() => filterByCounterparty(cp.counterparty)}
+                        title={`Filter transaction table for ${cp.counterparty}`}
+                      >
+                        <div className="cp-row-header">
+                          <div className="cp-name-wrap">
+                            <span className="cp-rank-num">#{idx + 1}</span>
+                            <strong className="cp-title">{cp.counterparty}</strong>
+                          </div>
+                          <div className="cp-amount-wrap">
+                            <strong className="cp-inr-val">{inr(Math.round(cp.total_amount_inr * 100))}</strong>
+                            <span className="cp-tx-pill">{cp.transaction_count} txs</span>
+                          </div>
+                        </div>
+                        {/* Relative volume progress bar */}
+                        <div className="cp-vol-track">
+                          <div className="cp-vol-bar" style={{ width: `${percent}%` }} />
+                        </div>
                       </div>
-                      <div className="cp-amount">{inr(Math.round(cp.total_amount_inr * 100))}</div>
-                      <small className="filter-hint">Click to filter table →</small>
-                    </div>
-                  ))}
+                    );
+                  })}
                 </div>
               )}
             </section>
           </div>
 
-          {/* 7. Normalized Transactions Explorer Table */}
+          {/* 4. Normalized Transaction Explorer Table */}
           <section
             ref={tableSectionRef}
             id="statement-transactions-section"
             className="panel statement-transactions-panel"
+            aria-label="Normalized transaction ledger"
           >
-            <div className="section-heading">
-              <div>
-                <h2>
-                  Normalized Transaction Stream ({displayedTransactions.length} of {preview.valid_transactions})
-                </h2>
-                <p>Standardized schema mapping with preserved date-precision and original source rows</p>
+            <div className="table-toolbar-deck">
+              <div className="toolbar-headline">
+                <h2>Transaction Stream</h2>
+                <span className="volume-pill">
+                  {displayedTransactions.length} of {preview.valid_transactions} Records
+                </span>
               </div>
 
-              <div className="table-controls-row">
-                <input
-                  type="search"
-                  placeholder="Filter by counterparty, narration, amount…"
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  className="table-search-input"
-                />
+              <div className="toolbar-controls-cluster">
+                {/* Search Field */}
+                <div className="search-field-wrapper">
+                  <span className="search-icon"><IconSearch /></span>
+                  <input
+                    type="search"
+                    placeholder="Search counterparty, narration, amount…"
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    className="styled-search-input"
+                  />
+                  {searchQuery && (
+                    <button
+                      type="button"
+                      className="search-clear-btn"
+                      onClick={() => setSearchQuery('')}
+                    >
+                      ✕
+                    </button>
+                  )}
+                </div>
 
-                <div className="direction-pills">
+                {/* Direction Segmented Control */}
+                <div className="direction-segmented-control">
                   {(['all', 'debit', 'credit', 'self_transfer'] as const).map((dir) => (
                     <button
                       key={dir}
                       type="button"
-                      className={`dir-pill-btn ${directionFilter === dir ? 'active' : ''}`}
+                      className={`segment-btn ${directionFilter === dir ? 'active' : ''}`}
                       onClick={() => setDirectionFilter(dir)}
                     >
-                      {dir === 'all' ? 'All' : dir.replace('_', ' ')}
+                      {dir === 'all' ? 'All' : dir === 'debit' ? 'Debits' : dir === 'credit' ? 'Credits' : 'Self-Transfers'}
                     </button>
                   ))}
                 </div>
               </div>
             </div>
 
-            {/* Active Anomaly Filter Banner */}
+            {/* Active Anomaly Drilldown Notification Strip */}
             {selectedAnomalyIndex !== null && analysis.anomalies[selectedAnomalyIndex] && (
-              <div className="active-anomaly-filter-banner">
-                <div className="filter-banner-info">
-                  <span className={`anomaly-badge ${analysis.anomalies[selectedAnomalyIndex].severity}`}>
+              <div className="anomaly-drilldown-banner">
+                <div className="banner-left">
+                  <span className={`severity-tag ${analysis.anomalies[selectedAnomalyIndex].severity}`}>
                     {analysis.anomalies[selectedAnomalyIndex].severity.toUpperCase()}
                   </span>
-                  <div>
-                    <strong>Filtering by anomaly: {analysis.anomalies[selectedAnomalyIndex].title}</strong>
-                    <span className="filter-count-text">
-                      Showing all {displayedTransactions.length} supporting transaction records
-                    </span>
-                  </div>
+                  <span className="banner-title">
+                    Focusing on anomaly: <strong>{analysis.anomalies[selectedAnomalyIndex].title}</strong>
+                  </span>
+                  <span className="banner-count">({displayedTransactions.length} records matching)</span>
                 </div>
-                <button type="button" className="clear-anomaly-btn" onClick={clearAnomalyFilter}>
-                  ✕ Clear filter &amp; show all ({preview.valid_transactions})
+                <button type="button" className="ghost-reset-btn" onClick={clearAnomalyFilter}>
+                  Clear Anomaly Filter ✕
                 </button>
               </div>
             )}
 
             {displayedTransactions.length === 0 ? (
-              <div className="table-empty-state">
-                <p>No transactions match the active filter criteria.</p>
+              <div className="empty-table-prompt">
+                <p>No transaction records match the current filter and search criteria.</p>
                 <button
                   type="button"
-                  className="secondary"
+                  className="secondary reset-filter-btn"
                   onClick={() => {
                     clearAnomalyFilter();
                     setDirectionFilter('all');
                     setSearchQuery('');
                   }}
                 >
-                  Reset search &amp; filters
+                  Reset All Filters
                 </button>
               </div>
             ) : (
@@ -661,67 +768,72 @@ export default function AccountConsole({
                 <table className="statement-table">
                   <thead>
                     <tr>
-                      <th>Tx ID</th>
-                      <th>Date / Timestamp</th>
-                      <th>Type</th>
-                      <th>Particulars / Counterparty</th>
-                      <th className="num-col">Amount (INR)</th>
-                      {preview.format === 'bank_statement' && <th className="num-col">Balance After</th>}
-                      <th>Precision</th>
+                      <th style={{ width: '130px' }}>Tx ID</th>
+                      <th style={{ width: '160px' }}>Timestamp</th>
+                      <th style={{ width: '100px' }}>Type</th>
+                      <th>Particulars &amp; Counterparty</th>
+                      <th className="num-col" style={{ width: '150px' }}>Amount (INR)</th>
+                      {preview.format === 'bank_statement' && (
+                        <th className="num-col" style={{ width: '150px' }}>Balance After</th>
+                      )}
+                      <th style={{ width: '90px' }}>Precision</th>
                     </tr>
                   </thead>
                   <tbody>
-                    {displayedTransactions.map((tx) => (
-                      <tr
-                        key={tx.transaction_id}
-                        className={highlightAnomalyTxIds.includes(tx.transaction_id) ? 'highlight-row' : ''}
-                      >
-                        <td>
-                          <code>{tx.transaction_id}</code>
-                        </td>
-                        <td>
-                          <span className="tx-time-text">
-                            {tx.timestamp_precision === 'minute'
-                              ? tx.timestamp.replace('T', ' ').replace('Z', '')
-                              : tx.timestamp.slice(0, 10)}
-                          </span>
-                        </td>
-                        <td>
-                          <span className={`direction-tag ${tx.direction}`}>{tx.direction}</span>
-                        </td>
-                        <td>
-                          <div className="particulars-cell">
-                            {tx.counterparty ? (
-                              <>
-                                <strong className="counterparty-name">{tx.counterparty}</strong>
-                                <small className="raw-particulars-text">{tx.description}</small>
-                              </>
-                            ) : (
-                              <span>{tx.description}</span>
-                            )}
-                          </div>
-                        </td>
-                        <td className="num-col">
-                          <strong className={`tx-amount-val ${tx.direction === 'credit' ? 'credit-val' : ''}`}>
-                            {tx.direction === 'credit' ? '+' : '-'}{inr(tx.amount_minor)}
-                          </strong>
-                        </td>
-                        {preview.format === 'bank_statement' && (
-                          <td className="num-col">
-                            <span className="balance-val">
-                              {tx.balance_after_minor !== null && tx.balance_after_minor !== undefined
-                                ? inr(tx.balance_after_minor)
-                                : '—'}
+                    {displayedTransactions.map((tx) => {
+                      const isHighlighted = highlightAnomalyTxIds.includes(tx.transaction_id);
+                      return (
+                        <tr
+                          key={tx.transaction_id}
+                          className={isHighlighted ? 'flagged-anomaly-row' : ''}
+                        >
+                          <td>
+                            <code className="tx-id-code">{tx.transaction_id}</code>
+                          </td>
+                          <td>
+                            <span className="tx-date-str">
+                              {tx.timestamp_precision === 'minute'
+                                ? tx.timestamp.replace('T', ' ').replace('Z', '')
+                                : tx.timestamp.slice(0, 10)}
                             </span>
                           </td>
-                        )}
-                        <td>
-                          <span className={`precision-tag ${tx.timestamp_precision}`}>
-                            {tx.timestamp_precision === 'minute' ? 'hh:mm' : 'date only'}
-                          </span>
-                        </td>
-                      </tr>
-                    ))}
+                          <td>
+                            <span className={`tx-type-pill ${tx.direction}`}>{tx.direction}</span>
+                          </td>
+                          <td>
+                            <div className="particulars-hierarchy">
+                              {tx.counterparty ? (
+                                <>
+                                  <strong className="counterparty-bold">{tx.counterparty}</strong>
+                                  <span className="narration-muted">{tx.description}</span>
+                                </>
+                              ) : (
+                                <span className="narration-standard">{tx.description}</span>
+                              )}
+                            </div>
+                          </td>
+                          <td className="num-col">
+                            <strong className={`amount-inr-val ${tx.direction === 'credit' ? 'credit' : 'debit'}`}>
+                              {tx.direction === 'credit' ? '+' : '-'}{inr(tx.amount_minor)}
+                            </strong>
+                          </td>
+                          {preview.format === 'bank_statement' && (
+                            <td className="num-col">
+                              <span className="balance-mono">
+                                {tx.balance_after_minor !== null && tx.balance_after_minor !== undefined
+                                  ? inr(tx.balance_after_minor)
+                                  : '—'}
+                              </span>
+                            </td>
+                          )}
+                          <td>
+                            <span className={`precision-badge ${tx.timestamp_precision}`}>
+                              {tx.timestamp_precision === 'minute' ? 'hh:mm' : 'date'}
+                            </span>
+                          </td>
+                        </tr>
+                      );
+                    })}
                   </tbody>
                 </table>
               </div>
@@ -730,7 +842,7 @@ export default function AccountConsole({
         </>
       )}
 
-      {/* 8. Bank Connection / Open Banking AA Modal */}
+      {/* 5. Open Banking AA Login Modal */}
       {showBankModal && (
         <div className="modal-backdrop" onClick={() => setShowBankModal(false)}>
           <div className="bank-login-modal" onClick={(e) => e.stopPropagation()}>
@@ -743,6 +855,7 @@ export default function AccountConsole({
                 type="button"
                 className="modal-close-btn"
                 onClick={() => setShowBankModal(false)}
+                aria-label="Close dialog"
               >
                 ✕
               </button>
@@ -751,7 +864,7 @@ export default function AccountConsole({
             <div className="modal-body">
               {modalStep === 'select_bank' && (
                 <div className="modal-step-content">
-                  <label className="modal-section-label">Select your banking institution:</label>
+                  <label className="modal-section-label">Select banking institution:</label>
                   <div className="bank-grid-selector">
                     {BANKS.map((b) => (
                       <div
@@ -806,9 +919,9 @@ export default function AccountConsole({
                   </div>
 
                   <div className="consent-disclaimer-box">
-                    <span className="disclaimer-shield">🛡️</span>
+                    <span className="disclaimer-shield"><IconShield /></span>
                     <p>
-                      <strong>Read-only consent:</strong> Blindspot will fetch up to {modalSelectedBank.recordCount} transaction records for
+                      <strong>Read-only consent:</strong> Blindspot will fetch {modalSelectedBank.recordCount} verified transaction records for
                       risk &amp; behavioral analysis. No fund movement or modification authority is granted.
                     </p>
                   </div>
