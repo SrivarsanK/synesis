@@ -76,7 +76,7 @@ pub fn generate_preview(
         _ => None,
     };
 
-    let preview_rows: Vec<NormalizedTransaction> = transactions.iter().take(10).cloned().collect();
+    let preview_rows: Vec<NormalizedTransaction> = transactions.to_vec();
 
     ImportPreview {
         format,
@@ -212,7 +212,6 @@ pub fn analyze_transactions(
                 .iter()
                 .filter(|t| t.timestamp.starts_with(day))
                 .map(|t| t.transaction_id.clone())
-                .take(6)
                 .collect();
 
             anomalies.push(PersonalAnomaly {

@@ -207,24 +207,72 @@ async fn import_samples() -> Result<Json<Value>, ApiError> {
                 "period": "Oct 2025 – Oct 12, 2026",
                 "valid_transactions": 373,
                 "description": "UPI payment export with 9 columns, counterparty VPAs, debit/credit/self-transfer tags, and 8 date-only records."
+            },
+            {
+                "id": "bank_statement_combined",
+                "title": "Kaaviya — Combined history (P1 + P2)",
+                "format": "bank_statement",
+                "period": "Jul 2025 – Oct 12, 2026",
+                "valid_transactions": 1322,
+                "description": "Unified account history combining consecutive Period 1 (505 txs) and Period 2 (817 txs) under verified account reference XXXX-XXXX-5610."
             }
         ]
     })))
 }
 
 async fn import_sample_analyze(Path(id): Path<String>) -> Result<Json<Value>, ApiError> {
+    let dir = std::path::PathBuf::from(env!("CARGO_MANIFEST_DIR"))
+        .parent()
+        .unwrap()
+        .join("fixtures")
+        .join("imports");
+
+    if id == "bank_statement_combined" {
+        let content1 = std::fs::read_to_string(dir.join("bank_statement_period1.csv"))
+            .map_err(ApiError::internal)?;
+        let content2 = std::fs::read_to_string(dir.join("bank_statement_period2.csv"))
+            .map_err(ApiError::internal)?;
+
+        let sig1 = imports::detect_format(&content1)?;
+        let sig2 = imports::detect_format(&content2)?;
+
+        let (mut txs1, meta1) =
+            imports::bank_statement::parse_bank_statement(&content1, sig1.header_line_index)?;
+        let (txs2, meta2) =
+            imports::bank_statement::parse_bank_statement(&content2, sig2.header_line_index)?;
+
+        if meta1.account_number_masked != meta2.account_number_masked {
+            return Err(ApiError::bad(
+                "ACCOUNT_MISMATCH",
+                "Cannot combine statements from different accounts",
+            ));
+        }
+
+        txs1.extend(txs2);
+        txs1.sort_by(|a, b| a.timestamp.cmp(&b.timestamp));
+
+        let preview = imports::validate::generate_preview(
+            imports::ImportFormat::BankStatement,
+            sig1.header_line_index + 1,
+            content1.lines().count() + content2.lines().count(),
+            &txs1,
+            Some(meta1),
+        );
+        let analysis =
+            imports::validate::analyze_transactions(imports::ImportFormat::BankStatement, &txs1);
+        return Ok(Json(json!({
+            "preview": preview,
+            "analysis": analysis,
+        })));
+    }
+
     let filename = match id.as_str() {
         "bank_statement_period1" => "bank_statement_period1.csv",
         "bank_statement_period2" => "bank_statement_period2.csv",
         "upi_transactions" => "upi_transactions.csv",
         _ => return Err(ApiError::bad("UNKNOWN_SAMPLE", "Sample not found")),
     };
-    let path = std::path::PathBuf::from(env!("CARGO_MANIFEST_DIR"))
-        .parent()
-        .unwrap()
-        .join("fixtures")
-        .join("imports")
-        .join(filename);
+    let path = dir.join(filename);
     let content = std::fs::read_to_string(path).map_err(ApiError::internal)?;
     let preview = imports::parse_and_preview(&content)?;
     let analysis = imports::parse_and_analyze(&content)?;

@@ -25,6 +25,14 @@ const SAMPLES: ImportSampleItem[] = [
     description: 'Consecutive follow-up bank statement period with identical column structure and zero date overlap with Period 1.',
   },
   {
+    id: 'bank_statement_combined',
+    title: 'Kaaviya — Combined history (P1 + P2)',
+    format: 'bank_statement',
+    period: 'Jul 2025 – Oct 12, 2026',
+    valid_transactions: 1322,
+    description: 'Unified account history combining consecutive Period 1 (505 txs) and Period 2 (817 txs) under verified account reference XXXX-XXXX-5610.',
+  },
+  {
     id: 'upi_transactions',
     title: 'Srivarsan transactions',
     format: 'upi_export',
@@ -45,15 +53,18 @@ export default function StatementImportPanel() {
   const [directionFilter, setDirectionFilter] = useState<'all' | 'debit' | 'credit' | 'self_transfer'>('all');
   const [searchQuery, setSearchQuery] = useState<string>('');
   const [highlightAnomalyTxIds, setHighlightAnomalyTxIds] = useState<string[]>([]);
+  const [selectedAnomalyIndex, setSelectedAnomalyIndex] = useState<number | null>(null);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
+  const tableSectionRef = useRef<HTMLDivElement | null>(null);
 
   const loadSample = async (id: string) => {
     setSelectedSample(id);
     setLoading(true);
     setError(null);
     setHighlightAnomalyTxIds([]);
+    setSelectedAnomalyIndex(null);
     try {
-      const res = await fetch(`http://127.0.0.1:3001/api/imports/samples/${id}/analyze`, {
+      const res = await fetch(`/api/imports/samples/${id}/analyze`, {
         method: 'POST',
       });
       if (!res.ok) {
@@ -82,11 +93,12 @@ export default function StatementImportPanel() {
     setLoading(true);
     setError(null);
     setHighlightAnomalyTxIds([]);
+    setSelectedAnomalyIndex(null);
 
     try {
       const text = await file.text();
       // First preview
-      const prevRes = await fetch('http://127.0.0.1:3001/api/imports/preview', {
+      const prevRes = await fetch('/api/imports/preview', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ content: text, filename: file.name }),
@@ -99,7 +111,7 @@ export default function StatementImportPanel() {
       setPreview(previewData);
 
       // Then analyze
-      const anRes = await fetch('http://127.0.0.1:3001/api/imports/analyze', {
+      const anRes = await fetch('/api/imports/analyze', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ content: text, filename: file.name }),
@@ -115,6 +127,21 @@ export default function StatementImportPanel() {
     } finally {
       setLoading(false);
     }
+  };
+
+  const inspectAnomaly = (idx: number, txIds: string[]) => {
+    setSelectedAnomalyIndex(idx);
+    setHighlightAnomalyTxIds(txIds);
+    setDirectionFilter('all');
+    setSearchQuery('');
+    setTimeout(() => {
+      tableSectionRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }, 60);
+  };
+
+  const clearAnomalyFilter = () => {
+    setHighlightAnomalyTxIds([]);
+    setSelectedAnomalyIndex(null);
   };
 
   // Filtered transactions
@@ -206,6 +233,29 @@ export default function StatementImportPanel() {
         </div>
       </section>
 
+      {/* Account Grouping Confirmation Callout */}
+      {(selectedSample === 'bank_statement_period1' || selectedSample === 'bank_statement_period2') && (
+        <section className="panel grouping-callout-panel">
+          <div className="grouping-callout-content">
+            <div className="grouping-callout-text">
+              <span className="grouping-badge">Consecutive Periods Available</span>
+              <strong>Combine Kaaviya Period 1 &amp; Period 2</strong>
+              <p>
+                Both statements share verified account reference <code>XXXX-XXXX-5610</code> and represent consecutive,
+                non-overlapping date ranges (Jul 2025 – Mar 2026 and Apr 2026 – Oct 2026). Combine them into a single 1,322-transaction account baseline.
+              </p>
+            </div>
+            <button
+              type="button"
+              className="primary grouping-action-btn"
+              onClick={() => loadSample('bank_statement_combined')}
+            >
+              Combine statements (1,322 records) →
+            </button>
+          </div>
+        </section>
+      )}
+
       {error && (
         <section className="panel empty" role="alert">
           <h2>Import Error</h2>
@@ -243,29 +293,28 @@ export default function StatementImportPanel() {
               <div className="signature-stat-box">
                 <span className="sig-label">Valid Records</span>
                 <strong className="accent-text">{preview.valid_transactions}</strong>
-                <small>Out of {preview.total_rows} total rows</small>
+                <small>All records normalized and searchable</small>
               </div>
 
               <div className="signature-stat-box">
                 <span className="sig-label">Date Range</span>
                 <strong>
-                  {preview.date_range ? `${preview.date_range.start} → ${preview.date_range.end}` : 'N/A'}
+                  {preview.date_range ? `${preview.date_range.start} – ${preview.date_range.end}` : 'Unknown'}
                 </strong>
-                <small>Chronologically verified</small>
+                <small>Chronological statement coverage</small>
               </div>
 
               <div className="signature-stat-box">
                 <span className="sig-label">Direction Counts</span>
                 <strong>
-                  {preview.direction_counts.debit} DR · {preview.direction_counts.credit} CR
-                  {preview.direction_counts.self_transfer > 0 ? ` · ${preview.direction_counts.self_transfer} Self` : ''}
+                  {preview.direction_counts.debit} DR / {preview.direction_counts.credit} CR
                 </strong>
-                <small>All non-zero amounts validated</small>
+                <small>{preview.direction_counts.self_transfer > 0 ? `${preview.direction_counts.self_transfer} self-transfers` : 'Standard direction split'}</small>
               </div>
             </div>
 
-            {/* Statement metadata (Account Holder / Masked Account Number) */}
-            {preview.metadata && (preview.metadata.account_holder || preview.metadata.account_number_masked) && (
+            {/* Extracted Metadata (for Bank Statements) */}
+            {preview.metadata && (
               <div className="statement-metadata-strip">
                 {preview.metadata.account_holder && (
                   <div>
@@ -288,10 +337,10 @@ export default function StatementImportPanel() {
               </div>
             )}
 
-            {/* Quality warnings / missing fields summary */}
+            {/* Missing Fields / Quality Callout */}
             {preview.missing_fields_summary.length > 0 && (
               <div className="missing-fields-callout">
-                <strong>Source Integrity Notes:</strong>
+                <strong>Source Data Observations:</strong>
                 <ul>
                   {preview.missing_fields_summary.map((msg, i) => (
                     <li key={i}>{msg}</li>
@@ -301,12 +350,12 @@ export default function StatementImportPanel() {
             )}
           </section>
 
-          {/* Cash Flow Summary & Behavioral Metrics */}
+          {/* Personal Financial Baseline Metrics */}
           <section className="panel personal-metrics-panel">
             <div className="section-heading">
               <div>
-                <h2>Cash flow &amp; behavioral summary</h2>
-                <p>Calculated baseline statistics across statement period</p>
+                <h2>Cash flow baseline &amp; volume summary</h2>
+                <p>Calculated historical distribution used as baseline for anomaly thresholds</p>
               </div>
             </div>
 
@@ -320,13 +369,14 @@ export default function StatementImportPanel() {
               <div className="kpi-card">
                 <span className="kpi-label">Total Credits</span>
                 <strong className="kpi-val success">{inr(Math.round(analysis.summary.total_credit_inr * 100))}</strong>
-                <small>{analysis.summary.credit_count} inward deposits</small>
+                <small>{analysis.summary.credit_count} inward transfers</small>
               </div>
 
               <div className="kpi-card">
                 <span className="kpi-label">Net Cash Flow</span>
-                <strong className={`kpi-val ${analysis.summary.net_flow_inr >= 0 ? 'success' : 'neutral'}`}>
-                  {analysis.summary.net_flow_inr >= 0 ? '+' : ''}{inr(Math.round(analysis.summary.net_flow_inr * 100))}
+                <strong className={`kpi-val ${analysis.summary.net_flow_inr >= 0 ? 'success' : 'danger'}`}>
+                  {analysis.summary.net_flow_inr >= 0 ? '+' : ''}
+                  {inr(Math.round(analysis.summary.net_flow_inr * 100))}
                 </strong>
                 <small>Credits minus debits</small>
               </div>
@@ -334,7 +384,7 @@ export default function StatementImportPanel() {
               <div className="kpi-card">
                 <span className="kpi-label">Average Outward Transfer</span>
                 <strong className="kpi-val">{inr(Math.round(analysis.summary.average_debit_inr * 100))}</strong>
-                <small>Historical baseline mean</small>
+                <small>Historical debit mean</small>
               </div>
 
               <div className="kpi-card">
@@ -363,8 +413,8 @@ export default function StatementImportPanel() {
                 <p>Identified deviations against rolling account baseline</p>
               </div>
               {highlightAnomalyTxIds.length > 0 && (
-                <button className="secondary" onClick={() => setHighlightAnomalyTxIds([])}>
-                  Clear transaction filter
+                <button className="secondary" onClick={clearAnomalyFilter}>
+                  ✕ Clear transaction filter
                 </button>
               )}
             </div>
@@ -375,39 +425,47 @@ export default function StatementImportPanel() {
               </div>
             ) : (
               <div className="anomalies-list-grid">
-                {analysis.anomalies.map((an, idx) => (
-                  <div key={idx} className={`anomaly-card severity-${an.severity}`}>
-                    <div className="anomaly-card-top">
-                      <span className={`anomaly-badge ${an.severity}`}>{an.severity.toUpperCase()}</span>
-                      <span className="anomaly-type-code">{an.anomaly_type}</span>
-                      {an.date && <span className="anomaly-date">{an.date.slice(0, 10)}</span>}
-                    </div>
-
-                    <h4 className="anomaly-title">{an.title}</h4>
-                    <p className="anomaly-description">{an.description}</p>
-
-                    <div className="anomaly-metrics-strip">
-                      <div>
-                        <span>Observed:</span>
-                        <strong>{an.metric_observed}</strong>
+                {analysis.anomalies.map((an, idx) => {
+                  const isSelected = selectedAnomalyIndex === idx;
+                  return (
+                    <div
+                      key={idx}
+                      className={`anomaly-card severity-${an.severity} ${isSelected ? 'selected-anomaly' : ''}`}
+                    >
+                      <div className="anomaly-card-top">
+                        <span className={`anomaly-badge ${an.severity}`}>{an.severity.toUpperCase()}</span>
+                        <span className="anomaly-type-code">{an.anomaly_type}</span>
+                        {an.date && <span className="anomaly-date">{an.date.slice(0, 10)}</span>}
                       </div>
-                      <div>
-                        <span>Threshold:</span>
-                        <strong>{an.threshold}</strong>
+
+                      <h4 className="anomaly-title">{an.title}</h4>
+                      <p className="anomaly-description">{an.description}</p>
+
+                      <div className="anomaly-metrics-strip">
+                        <div>
+                          <span>Observed:</span>
+                          <strong>{an.metric_observed}</strong>
+                        </div>
+                        <div>
+                          <span>Threshold:</span>
+                          <strong>{an.threshold}</strong>
+                        </div>
+                      </div>
+
+                      <div className="anomaly-card-footer">
+                        <button
+                          type="button"
+                          className={`filter-tx-btn ${isSelected ? 'active' : ''}`}
+                          onClick={() => inspectAnomaly(idx, an.transaction_ids)}
+                        >
+                          {isSelected
+                            ? `✓ Viewing ${an.transaction_ids.length} supporting transaction(s) below ↓`
+                            : `Inspect ${an.transaction_ids.length} supporting transaction(s) →`}
+                        </button>
                       </div>
                     </div>
-
-                    <div className="anomaly-card-footer">
-                      <button
-                        type="button"
-                        className="filter-tx-btn"
-                        onClick={() => setHighlightAnomalyTxIds(an.transaction_ids)}
-                      >
-                        Inspect {an.transaction_ids.length} supporting transaction(s) →
-                      </button>
-                    </div>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             )}
           </section>
@@ -437,7 +495,11 @@ export default function StatementImportPanel() {
           )}
 
           {/* Normalized Transactions Explorer */}
-          <section className="panel statement-transactions-panel">
+          <section
+            ref={tableSectionRef}
+            id="statement-transactions-section"
+            className="panel statement-transactions-panel"
+          >
             <div className="section-heading">
               <div>
                 <h2>
@@ -470,74 +532,111 @@ export default function StatementImportPanel() {
               </div>
             </div>
 
-            <div className="statement-table-wrapper">
-              <table className="statement-table">
-                <thead>
-                  <tr>
-                    <th>Tx ID</th>
-                    <th>Date / Timestamp</th>
-                    <th>Type</th>
-                    <th>Particulars / Counterparty</th>
-                    <th className="num-col">Amount (INR)</th>
-                    {preview.format === 'bank_statement' && <th className="num-col">Balance After</th>}
-                    <th>Precision</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {displayedTransactions.map((tx) => (
-                    <tr
-                      key={tx.transaction_id}
-                      className={highlightAnomalyTxIds.includes(tx.transaction_id) ? 'highlight-row' : ''}
-                    >
-                      <td>
-                        <code>{tx.transaction_id}</code>
-                      </td>
-                      <td>
-                        <span className="tx-time-text">
-                          {tx.timestamp_precision === 'minute'
-                            ? tx.timestamp.replace('T', ' ').replace('Z', '')
-                            : tx.timestamp.slice(0, 10)}
-                        </span>
-                      </td>
-                      <td>
-                        <span className={`direction-tag ${tx.direction}`}>{tx.direction}</span>
-                      </td>
-                      <td>
-                        <div className="particulars-cell">
-                          {tx.counterparty ? (
-                            <>
-                              <strong className="counterparty-name">{tx.counterparty}</strong>
-                              <small className="raw-particulars-text">{tx.description}</small>
-                            </>
-                          ) : (
-                            <span>{tx.description}</span>
-                          )}
-                        </div>
-                      </td>
-                      <td className="num-col">
-                        <strong className={`tx-amount-val ${tx.direction === 'credit' ? 'credit-val' : ''}`}>
-                          {tx.direction === 'credit' ? '+' : '-'}{inr(tx.amount_minor)}
-                        </strong>
-                      </td>
-                      {preview.format === 'bank_statement' && (
-                        <td className="num-col">
-                          <span className="balance-val">
-                            {tx.balance_after_minor !== null && tx.balance_after_minor !== undefined
-                              ? inr(tx.balance_after_minor)
-                              : '—'}
+            {/* Active Anomaly Filter Banner */}
+            {selectedAnomalyIndex !== null && analysis.anomalies[selectedAnomalyIndex] && (
+              <div className="active-anomaly-filter-banner">
+                <div className="filter-banner-info">
+                  <span className={`anomaly-badge ${analysis.anomalies[selectedAnomalyIndex].severity}`}>
+                    {analysis.anomalies[selectedAnomalyIndex].severity.toUpperCase()}
+                  </span>
+                  <div>
+                    <strong>Filtering by anomaly: {analysis.anomalies[selectedAnomalyIndex].title}</strong>
+                    <span className="filter-count-text">
+                      Showing all {displayedTransactions.length} supporting transaction records
+                    </span>
+                  </div>
+                </div>
+                <button type="button" className="clear-anomaly-btn" onClick={clearAnomalyFilter}>
+                  ✕ Clear filter &amp; show all ({preview.valid_transactions})
+                </button>
+              </div>
+            )}
+
+            {displayedTransactions.length === 0 ? (
+              <div className="table-empty-state">
+                <p>No transactions match the active filter criteria.</p>
+                <button
+                  type="button"
+                  className="secondary"
+                  onClick={() => {
+                    clearAnomalyFilter();
+                    setDirectionFilter('all');
+                    setSearchQuery('');
+                  }}
+                >
+                  Reset search &amp; filters
+                </button>
+              </div>
+            ) : (
+              <div className="statement-table-wrapper">
+                <table className="statement-table">
+                  <thead>
+                    <tr>
+                      <th>Tx ID</th>
+                      <th>Date / Timestamp</th>
+                      <th>Type</th>
+                      <th>Particulars / Counterparty</th>
+                      <th className="num-col">Amount (INR)</th>
+                      {preview.format === 'bank_statement' && <th className="num-col">Balance After</th>}
+                      <th>Precision</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {displayedTransactions.map((tx) => (
+                      <tr
+                        key={tx.transaction_id}
+                        className={highlightAnomalyTxIds.includes(tx.transaction_id) ? 'highlight-row' : ''}
+                      >
+                        <td>
+                          <code>{tx.transaction_id}</code>
+                        </td>
+                        <td>
+                          <span className="tx-time-text">
+                            {tx.timestamp_precision === 'minute'
+                              ? tx.timestamp.replace('T', ' ').replace('Z', '')
+                              : tx.timestamp.slice(0, 10)}
                           </span>
                         </td>
-                      )}
-                      <td>
-                        <span className={`precision-tag ${tx.timestamp_precision}`}>
-                          {tx.timestamp_precision === 'minute' ? 'hh:mm' : 'date only'}
-                        </span>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
+                        <td>
+                          <span className={`direction-tag ${tx.direction}`}>{tx.direction}</span>
+                        </td>
+                        <td>
+                          <div className="particulars-cell">
+                            {tx.counterparty ? (
+                              <>
+                                <strong className="counterparty-name">{tx.counterparty}</strong>
+                                <small className="raw-particulars-text">{tx.description}</small>
+                              </>
+                            ) : (
+                              <span>{tx.description}</span>
+                            )}
+                          </div>
+                        </td>
+                        <td className="num-col">
+                          <strong className={`tx-amount-val ${tx.direction === 'credit' ? 'credit-val' : ''}`}>
+                            {tx.direction === 'credit' ? '+' : '-'}{inr(tx.amount_minor)}
+                          </strong>
+                        </td>
+                        {preview.format === 'bank_statement' && (
+                          <td className="num-col">
+                            <span className="balance-val">
+                              {tx.balance_after_minor !== null && tx.balance_after_minor !== undefined
+                                ? inr(tx.balance_after_minor)
+                                : '—'}
+                            </span>
+                          </td>
+                        )}
+                        <td>
+                          <span className={`precision-tag ${tx.timestamp_precision}`}>
+                            {tx.timestamp_precision === 'minute' ? 'hh:mm' : 'date only'}
+                          </span>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
           </section>
         </>
       )}
